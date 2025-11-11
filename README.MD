@@ -121,27 +121,6 @@ The pipeline will:
 5. Display progress updates every 10 batches
 
 
-## 📊 Database Schema
-
-### `asteroid_approaches` Table
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | Integer (PK) | Auto-incrementing primary key |
-| `neo_reference_id` | String(50) | NASA's unique asteroid identifier |
-| `name` | String(255) | Asteroid designation |
-| `close_approach_date` | Date | Date of closest approach to Earth |
-| `absolute_magnitude_h` | Float | Absolute magnitude (brightness) |
-| `estimated_diameter_km_min` | Float | Minimum estimated diameter (km) |
-| `estimated_diameter_km_max` | Float | Maximum estimated diameter (km) |
-| `is_potentially_hazardous` | Boolean | Potentially Hazardous Asteroid flag |
-| `relative_velocity_kmh` | Float | Velocity relative to Earth (km/h) |
-| `miss_distance_km` | Float | Distance from Earth (km) |
-| `miss_distance_astronomical` | Float | Distance in AU |
-| `orbiting_body` | String(50) | Body being orbited (typically Earth) |
-| `ingested_at` | DateTime | Timestamp of data ingestion |
-
-
 ## 🎯 Future Enhancements
 
 - [ ] Add automated daily/weekly incremental updates
