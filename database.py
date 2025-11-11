@@ -65,6 +65,8 @@ class AsteroidApproach(Base):
     absolute_magnitude_h = Column(Float)
     estimated_diameter_km_min = Column(Float)
     estimated_diameter_km_max = Column(Float)
+    estimated_diameter_miles_min = Column(Float)
+    estimated_diameter_miles_max = Column(Float)
     is_potentially_hazardous = Column(Boolean, default=False)
     is_sentry_object = Column(Boolean, default=False)
 
@@ -74,8 +76,11 @@ class AsteroidApproach(Base):
     epoch_date_close_approach = Column(BigInteger)
     relative_velocity_kmh = Column(Float)
     relative_velocity_kms = Column(Float)
-    miss_distance_km = Column(Float)
+    relative_velocity_miles_per_hour = Column(Float)
     miss_distance_astronomical = Column(Float)
+    miss_distance_lunar = Column(Float)
+    miss_distance_km = Column(Float)
+    miss_dstance_miles = Column(Float)
     orbiting_body = Column(String(50), default="Earth")
 
     # Metadata
