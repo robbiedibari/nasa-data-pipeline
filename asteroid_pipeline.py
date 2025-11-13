@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -168,7 +169,7 @@ def load_asteroids_to_database(approach: list):
     return loaded, skipped
 
 
-def backfill_asteroids(start_date_str: str, end_date_str, sleep_time=7):
+def backfill_asteroids(start_date_str: str, end_date_str, sleep_time=30):
     """
     Backfill asteroid data by fetching in 7 day chunks
 
@@ -223,6 +224,45 @@ def backfill_asteroids(start_date_str: str, end_date_str, sleep_time=7):
         time.sleep(sleep_time)
 
 
+def update_latest():
+    """
+    Fetch and load the most recent asteroid data run this weekly to keep database current
+    """
+    end_date = datetime.now().date()
+    start_date = end_date - timedelta(days=7)
+
+    print(f"\n{'=' * 60}")
+    print(f"Weekly Update - Fetching Latest Data")
+    print(f"Date range: {start_date} to {end_date}")
+    print(f"{'=' * 60}\n")
+
+    # Fetch from NASA
+    data = retrieve_asteroids(
+        start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")
+    )
+
+    if data:
+        # Parse the JSON
+        approaches = parse_asteroid_data(data)
+
+        # Load to database
+        loaded, skipped = load_asteroids_to_database(approaches)
+
+        print(f"\n{'=' * 60}")
+        print(f"✅ Weekly update complete!")
+        print(f"{'=' * 60}")
+        print(f"New records added: {loaded}")
+        print(f"Duplicates skipped: {skipped}")
+        print(f"Total processed: {len(approaches)}")
+    else:
+        print("❌ Failed to fetch latest data from NASA API")
+
+
 if __name__ == "__main__":
     # Test 3 weeks:
-    backfill_asteroids("2000-01-08", "2000-01-28")
+    backfill_asteroids("2000-01-28", "2025-11-11")
+    if len(sys.argv) > 1 and sys.argv[1] == "update":
+        # Manually update mode
+        update_latest()
+    else:
+        backfill_asteroids("2000-01-28", "2025-11-11", sleep_time=30)
