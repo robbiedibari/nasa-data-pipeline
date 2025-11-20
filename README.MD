@@ -2,7 +2,7 @@
 
 A production-grade data engineering pipeline that extracts Near-Earth Object (NEO) data from NASA's API, transforms it into structured records, and loads it into a PostgreSQL database for analysis and machine learning applications.
 
-## 📋 Project Overview
+## Project Overview
 
 This pipeline automatically fetches asteroid close approach data from NASA's NeoWs (Near Earth Object Web Service) API and stores it in a relational database. The system handles rate limiting, data validation, and duplicate prevention while processing decades of historical asteroid observations.
 
@@ -14,7 +14,7 @@ This pipeline automatically fetches asteroid close approach data from NASA's Neo
 - **Duplicate Prevention**: Unique constraints prevent data duplication
 - **Scalable Architecture**: Designed to handle millions of records efficiently
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 - **Python 3.12+**: Core programming language
 - **PostgreSQL 16**: Relational database
@@ -23,17 +23,6 @@ This pipeline automatically fetches asteroid close approach data from NASA's Neo
 - **pgAdmin**: Database management interface
 - **NASA NeoWs API**: Data source
 
-## 📁 Project Structure
-```
-nasa-data-pipeline/
-├── asteroid_pipeline.py    # Main ETL pipeline script
-├── database.py             # SQLAlchemy models and DB configuration
-├── docker-compose.yml      # Docker services configuration
-├── .env                    # Environment variables (not committed)
-├── .gitignore             # Git ignore rules
-├── requirements.txt        # Python dependencies
-└── README.md              # Project documentation
-```
 
 ## 🚀 Getting Started
 
@@ -95,7 +84,7 @@ Access pgAdmin at `http://localhost:5050`
   - Database: `nasa`
   - Username/Password: from `.env`
 
-## 💻 Usage
+## Usage
 
 ### Run the Pipeline
 
@@ -121,7 +110,7 @@ The pipeline will:
 5. Display progress updates every 10 batches
 
 
-## 🎯 Future Enhancements
+##  Future Enhancements
 
 - [ ] Add automated daily/weekly incremental updates
 - [ ] Implement checkpointing for pipeline resumption
@@ -132,7 +121,7 @@ The pipeline will:
 - [ ] Develop machine learning models for approach prediction
 - [ ] Build visualization dashboard (Streamlit/Grafana)
 
-## 📈 Performance Metrics
+##  Performance Metrics
 
 - **API Rate Limit**: 1,000 requests/hour
 - **Batch Size**: 7 days per request
@@ -140,26 +129,23 @@ The pipeline will:
 - **Historical Load Time** (2000-2025): ~90 minutes
 - **Expected Records**: 50,000+ asteroid approaches
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 📝 License
+##  License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 - NASA's Near Earth Object Web Service (NeoWs) API
 - [NASA API Portal](https://api.nasa.gov/)
 - JPL's Center for Near-Earth Object Studies
 
-## 📧 Contact
+##  Contact
 
-Your Name - [@yourtwitter](https://twitter.com/yourtwitter)
 
 Project Link: [https://github.com/robbiedibari/nasa-data-pipeline](https://github.com/robbiedibari/nasa-data-pipeline)
-
----
 
 **Note**: This is a personal learning project for data engineering practice. Always respect NASA API rate limits and terms of service.

@@ -4,3 +4,5 @@ __pycache__/
 *.pyc
 *.log
 pipeline_checkpoint.json
+asteroid.json
+text.txt

@@ -106,7 +106,7 @@ class AsteroidApproach(Base):
 # Function to initialize database
 def init_db():
     Base.metadata.create_all(engine)
-    print("✓ Database tables created successfully!")
+    print("Database tables created successfully!")
     print("  - apod")
     print("  - asteroid_approaches")
 

@@ -35,7 +35,7 @@ def retrieve_asteroids(start_date: str, end_date: str):
         response = requests.get(url, timeout=30)
 
         if response.status_code == 200:
-            print(f" ✓ Success! Got data.")
+            print(f"Success! Got data.")
             data = response.json()
             return data
         else:
@@ -163,8 +163,8 @@ def load_asteroids_to_database(approach: list):
     finally:
         # Close session
         session.close()
-    print(f"  ✓ Loaded: {loaded}")
-    print(f"  ⊘ Skipped (duplicates): {skipped}")
+    print(f"   Loaded: {loaded}")
+    print(f"   Skipped (duplicates): {skipped}")
 
     return loaded, skipped
 
@@ -212,7 +212,7 @@ def backfill_asteroids(start_date_str: str, end_date_str, sleep_time=30):
             total_loaded += loaded
             total_skipped += skipped
         else:
-            print("  ⚠️  Skipping this batch due to API error")
+            print(" Skipping this batch due to API error")
 
         current_start = current_end + timedelta(days=1)
 
@@ -249,7 +249,7 @@ def update_latest():
         loaded, skipped = load_asteroids_to_database(approaches)
 
         print(f"\n{'=' * 60}")
-        print(f"✅ Weekly update complete!")
+        print(f"Weekly update complete!")
         print(f"{'=' * 60}")
         print(f"New records added: {loaded}")
         print(f"Duplicates skipped: {skipped}")
