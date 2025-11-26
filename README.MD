@@ -24,7 +24,7 @@ This pipeline automatically fetches asteroid close approach data from NASA's Neo
 - **NASA NeoWs API**: Data source
 
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -120,14 +120,6 @@ The pipeline will:
 - [ ] Add dbt for SQL transformations
 - [ ] Develop machine learning models for approach prediction
 - [ ] Build visualization dashboard (Streamlit/Grafana)
-
-##  Performance Metrics
-
-- **API Rate Limit**: 1,000 requests/hour
-- **Batch Size**: 7 days per request
-- **Processing Speed**: ~4 seconds per batch
-- **Historical Load Time** (2000-2025): ~90 minutes
-- **Expected Records**: 50,000+ asteroid approaches
 
 ##  Contributing
 
