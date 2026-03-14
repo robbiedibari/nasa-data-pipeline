@@ -259,10 +259,8 @@ def update_latest():
 
 
 if __name__ == "__main__":
-    # Test 3 weeks:
-    backfill_asteroids("2000-01-28", "2025-11-11")
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    backfill_asteroids("2025-03-14", current_date)
     if len(sys.argv) > 1 and sys.argv[1] == "update":
         # Manually update mode
         update_latest()
-    else:
-        backfill_asteroids("2000-01-28", "2025-11-11", sleep_time=30)

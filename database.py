@@ -28,7 +28,7 @@ database = os.getenv("POSTGRES_DB")
 
 DATABASE_URL = f"postgresql://{user}:{password}@{host}:{port}/{database}"
 
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(DATABASE_URL)
 
 # Create engine:
 
