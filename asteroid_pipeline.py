@@ -260,7 +260,7 @@ def update_latest():
 
 if __name__ == "__main__":
     current_date = datetime.now().strftime("%Y-%m-%d")
-    backfill_asteroids("2025-03-14", current_date)
+    backfill_asteroids("2026-03-13", current_date)
     if len(sys.argv) > 1 and sys.argv[1] == "update":
         # Manually update mode
         update_latest()

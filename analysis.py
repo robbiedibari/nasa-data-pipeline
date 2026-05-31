@@ -18,6 +18,7 @@ DATABASE_URL = f"postgresql://{user}:{password}@{host}:{port}/{database}"
 # How many asteroids approach earth each year and month?
 
 query = """
+
 SELECT
 	EXTRACT (YEAR FROM close_approach_date),
 	EXTRACT(MONTH from close_approach_date),
@@ -32,7 +33,8 @@ GROUP BY
 	EXTRACT(MONTH from close_approach_date)
 ORDER BY EXTRACT (YEAR FROM close_approach_date),
 	EXTRACT(MONTH FROM close_approach_date);
-    """
+
+"""
 
 engine = create_engine(DATABASE_URL)
 

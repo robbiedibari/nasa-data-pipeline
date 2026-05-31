@@ -1,0 +1,5125 @@
+ Database: Organize collections of structured data
+DBMS(database management system): Software that helps use and connect the database to the client.
+- Often abbreviated as "PostGres"
+- Relational database management system (RDBMS)
+- Fourth most popular RDBMS on the market
+- Open source software free, which is to use for any purpose
+
+**Order of Execution:**
+
+``` SQL
+1. FROM - Get the table
+2. WHERE - Filter individual rows
+3. GROUP BY - Group the remaining rows
+4. HAVING - Filter the groups
+5. SELECT - Choose columns to display
+6. ORDER BY - Sort the results
+```
+
+
+RDBMS:
+- Creates a protective wrapper around your data
+- Gives your data a place to live and controls modifications
+- Secures your data by enforcing access permission
+- Manages system performance for data read and writes
+![[Screenshot 2025-06-12 at 10.58.23 AM.png]]
+Creating/Connecting docker postgres database through terminal
+
+Server/ Client Model
+
+![[Screenshot 2025-06-10 at 6.01.48 PM.png]]
+
+SQL:
+- SQL is used by data progressional in every RDBMS on the market
+- Reading and writing SQL code is a highly south skill
+- SQL uses human-readable syntax
+
+
+LEARN SQL:  Through the terminal/Command line
+
+Create DATABASE
+quitting from the database pannel : \q
+list all the database: \l
+
+#### CREATE FRESH DATABASE:
+``` sql
+CREATE DATABASE test;
+```
+Connecting to the docker container
+ `docker exec -it <name server> psql -U postgres`
+Connecting to local/ remote server:
+`psql -h localhost -p 5432 -U username <database name>`
+
+
+Connecting to a specific database From inside the docker container:
+`\c <namedatabase>`
+Connecting to a specific database from outside the docker container
+`psql -h localhost -U postgres -p 5432 -d <namedatabase>`
+
+#### CREATE TABLE WITH POSTGRES
+```SQL
+CREATE TABLE table_name (
+	column name + data type + constraits if any
+)
+
+CREATE TABLE person (
+	id int,
+	first_name VARCHAR(50),
+	last_name VARCHAR(50),
+	gender VARCHAR(6),
+	data_of_birth DATE);
+```
+#### LIST of all DATA TYPES:
+https://www.postgresql.org/docs/current/datatype.html
+![[Screenshot 2025-06-12 at 11.33.11 AM.png]]
+
+`\d` to see all tables
+`\d person` to describe the table
+
+#### CREATE TABLE WITH CONSTRAINT
+
+```SQL
+CREATE TABLE person (
+	id int,
+	first_name VARCHAR(50),
+	last_name VARCHAR(50),
+	gender VARCHAR(6),
+	data_of_birth DATE);
+
+CREATE TABLE person (
+	id BIGSERIAL NOT NULL PRIMARY KEY,
+	first_name VARCHAR(50) NOT NULL,
+	last_name VARCHAR(50) NOT NULL,
+	gender VARCHAR(6) NOT NULL,
+	data_of_birth DATE NOT NULL);
+```
+
+#### DROP TABLE:
+```SQL
+DROP TABLE person;
+```
+
+DROP TABLE WITH CONSTRAINT:
+```SQL
+DROP TABLE table_name CASCADE;
+```
+
+#### , ADDING A NEW COLUMN TO AN EXISTING TABLE:
+```SQL
+ALTER TABLE person ADD COLUMN email VARCHAR(150);
+
+```
+
+WE HAVE PERSON_ID_SEQ BECAUSE OF BIGSERIAL  is not a table it is simply a sequence
+
+#### INSERT DATA INTO A TABLE:
+```SQL
+INSERT INTO person(
+	first_name,
+	last_name,
+	gender,
+	date_of_birth)
+VALUES ( 'Anne', 'Smith', 'Female', DATE '1988-01-09');
+
+INSERT INTO person(
+	first_name,
+	last_name,
+	gender,
+	date_of_birth,
+	email)
+VALUES ( 'Jake', 'Jones', 'Male', DATE '1990-01-10', 'jake@gmail.com');
+
+we are not adding the id serial because BIGSERIAL is automatically incrementing it for us.
+The order or the values must match the order in the insert into
+```
+
+#### READ ALL THE RECORDS IN OUR PERSON TABLE.
+```sql
+SELECT * FROM person;
+
+SELECT first_name, last_name FROM person;
+
+SELECT email FROM person;
+```
+* * mean everysingle information from the table
+
+
+ADDING 1000 MORE DATA USING MOCKAROO.COM :
+```
+
+```
+
+import from a file:
+```
+In terminal
+look for where the file is:
+once you are in the folder
+	grab the path by typing  pwd
+
+ to back into your database
+test=# \i /Users/robertodibari/Downloads/person.sql
+```
+
+
+#### SORTING using ORDER BY:
+1 2 3 4 5 ASC asceding order
+5 4 3 2 1 DESC descending order
+they works for date, string, number
+
+```SQL
+SELECT * FROM person ORDER BY country_of_birth; default is ASC
+SEELCT * FROM person ORDER BY id, email; *
+```
+
+
+#### REMOVING DUPLICATES
+we use DISTINCT
+``` SQL
+SELECT DISTINCT country_of_birth FROM person ORDER BY country_of_birth;
+```
+
+#### WHERE CLAUSE
+```SQL
+SELECT * FROM person WHERE GENDER = 'Female';
+```
+
+#### GROUP BY
+
+Combines rows with the same value, Aggregates a column by another columns
+Every Columns used in the select should be included in the GROUP by clause;
+``` SQL
+SELECT Country, Sum(score) FROM tablename GROUP BY Country
+```
+
+```SQL
+SELECT DISTINCT  country_of_birth FROM person; returns all the country
+SELECT country_of_birth, COUNT(*) FROM person GROUP BY country_of_birth;
+IT selects the country of birth and the number of times they repeats (see picture)
+
+```
+![[Screenshot 2025-06-13 at 10.02.52 AM.png]]
+
+#### GROUP-BY Rollup()
+```SQL
+SELECT
+	category_id,
+	product_name,
+	count(*),
+	min(price) as lowest_price,
+	max(price) as max_price,
+	avg(price) as avg_price
+FROM inventory.products
+GROUP BY  ROLLUP (category_id, product_name)
+ORDER BY category_id, product_name;
+```
+
+It is a subclause of the `GROUP BY` clause used to generate multiple levels of summary data, including subtootals and grand total. Within a single query.
+
+
+#### GROUP BY CUBE
+It returns all possible combinations of groups when you are using multiple GROUP BY columns. This is usefull when your data can be segmented into different groups, but those groups don't necessarily  have a relationship to one another.
+
+```SQL
+SELECT
+	category_id,
+	size,
+	count(*),
+	min(price) as lowest_price,
+	max(price) as max_price,
+	avg(price) as avg_price
+FROM inventory.products
+GROUP BY  CUBE (category_id, size)
+ORDER BY category_id, size;
+
+-- Cube is giving us 4 different query all at once. it returns all possible combination in a sigle result
+```
+
+
+#### FILTER
+```SQL
+SELECT category_id,
+	count(*) as count_all,
+	avg(price) as average_price,
+	-- Small product size <= 16oz
+	count(*) filter(where size <= 16) as count_small,
+	AVG(price) filter(where size <=16 ) as avg_price_small,
+	-- Big product size > 16
+	count(*) filter(where size > 16) as count_big,
+	AVG(price)filter (where size > 16) as avg_price_big
+FROM inventory.products
+GROUP BY (category_id)
+order by category_id;
+```
+![[Screenshot 2025-11-17 at 1.07.25 PM.png]]
+
+#### HAVING
+Filters the data but after the aggregation, it can be used ONLY after , with GROUP BY
+it works with group by it allows to perform extra filtering
+HAVING DOESN'T ALLOWS ALIAS
+
+```SQL
+SELECT Country, Sum(score)
+FROM tablename
+GROUP BY Country
+HAVING condition
+
+SELECT country, SUM(score), COUNT(country)  FROM customers GROUP BY country HAVING SUM(score)  > 800 AND COUNT(country) > 1;
+
+```
+
+
+```SQL
+
+SELECT country_of_birth, COUNT(*) FROM person GROUP BY country_of_birth HAVING COUNT(*) > 5 ORDER BY country_of_birth;
+
+This code select all those country that have been repeated at least 5 times
+```
+
+
+DIFFERENCE BETWEEN HAVING AND WHERE
+	WHERE is to filter before aggregation
+	HAVING is to filter after the aggregation
+
+#### MAX , MIN, AVG. SUM OPERATIONS
+
+```SQL
+SELECT MAX(price) FROM car;
+
+SELECT MIN(price) FROM car;
+
+SELECT AVG(price) FROM car;
+SELECT ROUND(AVG(PRICE))FROM car;
+
+SEE THE MIN/MAX MAKE price
+SELECT make, model, MIN(price) FROM car GROUP BY make, model;
+SELECT make, model, MAX(price) FROM car GROUP BY make, model;
+
+These group by **both** `make` AND `model`, so you get:
+
+- The minimum price for each **specific car model**
+- The maximum price for each **specific car model**
+
+SELECT make, SUM(price) FROM car GROUP BY make; It display the total sum of each make
+```
+
+
+#### PRODUCE RESULTS/STATISTICS:
+``` SQL
+ARITHMETIC OPERATOR
+ADDITION:
+SELECT 10 + 2;
+SELECT 10 - 2;
+SELECT 10 * 2;
+SELECT 10 + 2 * 8;
+SELECT 10 ^ 2;# POWER
+SELECT 5!; # FACTORIAL
+SELECT 10 % 3; # MODULE
+```
+
+Adding a new colum with the discounted price of 10%
+```SQL
+SELECT make, model, price, ROUND(price * .10,2) FROM car;
+
+# Adding a new column with the total cost after the discount
+SELECT make, model, price, ROUND(price * 10,2), ROUND(price - (price * .10),2) FROM car;
+```
+
+
+
+#### ALIAS:
+PROVIDE Name for the colomns just created
+```SQL
+SELECT make, model, price AS original_price, ROUND(price * 10,2) AS ten_percent, ROUND(price - (price * .10),2) AS discount_after_10_percent FROM car;
+
+```
+
+#### COALESCE
+It allows us to have a default value in case the first one is not present.
+```SQL
+SELECT COALESCE(null,null,1) AS number;
+SELECT COALESCE(email, 'Email not provided')FROM person;
+# if the first value is not present trying the second one, if it is not put 1
+
+Let's try to get every person from person table and if they don't have an email let's put email not provided
+```
+
+#### NULLIF
+tackle division by 0 , IT TAKES TWO ARGUMENT
+```SQL
+SELECT NULLIF(10,10); NULL
+SELECT NULLIF(10,1); 10
+SELECT 10 / NULLIF(2,9); 5
+SELECT 10 / NULLIF(0,0); 0 WITHOUT THROWING AN ERROR
+
+SELECT COALESCE(10/ NULLIF(0,0),0); = 0
+```
+
+
+#### DATES:
+```SQL
+SELECT NOW(); timestamp
+SELECT NOW()::DATE; 2018-12-02
+SELECT NOW()::TIME; 22:44:35.54534
+
+```
+
+#### ADDING AND SUBTRACTING DATES:
+``` SQL
+SELECT NOW() - INTERVAL '10 YEARS'; 2015-06-13 18:05:52.5346
+SELECT NOW() - INTERVAL '10 MONTHS';
+SELECT NOW() - INTERVAL '10 DAYS';
+SELECT NOW() + INTERVAL '10 DAYS';
+```
+
+#### EXTRACT VALUES FROM DATE
+```SQL
+SELECT EXTRACT(YEAR FROM NOW());it returns just the year
+SELECT EXTRACT(MONTH FROM NOW());
+SELECT EXTRACT(DAY FROM NOW());
+SELECT EXTRACT(DOW FROM NOW()); # DAY OF THE WEEK
+SELECT EXTRACT(CENTURY FROM NOW());
+```
+
+#### AGE FUNCTION
+IT TAKES TWO ARGUMENTS, THE FIRST IS THE ACTUAL TIME STAMP AND THE SECOND IS THE DATE
+```SQL:
+SELECT first_name,last_name, gender, country_of_birth, date_of_birth, AGE(NOW(), date_of_birth)AS AGE  FROM person;
+```
+
+
+#### PRIMARY KEYS (PK)
+- IS A VALUE THAT UNIQUELY IDENTIFIES A RECORD IN A TABLE
+- Doesn't have real word significance
+- Does not imply ranking or sequence, or count of items
+- we can't have someone with the same ID
+
+DROP primary Key constraint
+```SQL
+ALTER TABLE person DROP CONSTRAINT person_pkey;
+```
+
+#### ADD CONSTRAINT BACK
+ADD PRIMARY KEY takes an array of values because we can have multiple columns as primary keys.
+we cannot add a primary key where the rows are not unique.
+```SQL
+ALTER TABLE person ADD PRIMARY KEY (id);
+```
+#### delete a row from a table
+```SQL
+DELETE FROM person WHERE id = 1;
+```
+
+#### UNIQUE constraint
+unique values for columns
+``` SQL
+ALTER TABLE person ADD CONSTRAINT unique_email_address UNIQUE(email);
+```
+
+#### DROP CONSTRAINT
+``` SQL
+ALTER TABLE person DROP CONSTRAINT unique_email_address;
+
+ALTER TABLE person add UNIQUE(email) in this case the constraint is defined by postgres.
+```
+
+#### CHECK CONSTRAINT:
+``` SQL
+ALTER TABLE person ADD CONSTRAINT gender_constraint CHECK(gender = 'Female' OR gender == 'Male');
+```
+
+It returns TRUE of FALSE
+
+#### DELETING RECORDS
+```SQL
+DELETE FROM person; # It delete everything from table
+
+DELETE FROM person WHERE id = 1;
+```
+
+#### UPDATING RECORD
+update a column or multiple columns based on the where close or every single rows without the having
+```SQL
+Updating Conroy Tremeer from null email to email
+
+UPDATE person SET email = 'conroy@gmail.com'; This will update every single row
+UPDATE person SET email = 'conroy@gmail.com' WHERE id = 6;
+
+UPDATE person SET first_name = 'Conroi', last_name = 'Di Bari', email = 'conroidibari@gmail.com' WHERE id = 6;
+```
+
+with DELETE and UPDATE you always want to have a WHERE clause because otherwise you will update/delete the entire table.
+
+#### DEAL WITH duplicate key error
+```SQL
+INSERT INTO person (id, first_name, last_name, email, gender, date_of_birth, country_of_birth)                                                                 VALUES(17,'Alisha', 'Scandall', 'alisha@scandall.com', 'Female' , '1990-05-19', 'Tajikistan')
+ON CONFLICT(id) DO NOTHING;
+
+VALUES(17,'Alisha', 'Scandall', 'alisha@scandall.com', 'Female' , '1990-05-19', 'Tajikistan')
+ON CONFLICT(id) DO UPDATE SET email = EXCLUDED.email;
+
+```
+ON CONFLICT works only if the column is Unique or has a unique constraint.
+
+TAKE the latest insert coming from the Client
+#### ON CONFLICT DO UPDATE
+```SQL
+1ST REQUEST
+INSERT INTO person (id, first_name, last_name, email, gender, date_of_birth, country_of_birth)                                                                 VALUES(17,'Alisha', 'Scandall', 'alisha@scandall.com', 'Female' , '1990-05-19', 'Tajikistan')
+ON CONFLICT(id) DO NOTHING;
+INSERT 0 0
+
+If we perform this request there is no insert
+
+Change the email
+
+INSERT INTO person (id, first_name, last_name, email, gender, date_of_birth, country_of_birth)                                                                 VALUES(17,'Alish', 'candall', 'alisha@scandall.uk.gov', 'Female' , '1990-05-19', 'Tajikistan')
+ON CONFLICT(id) DO UPDATE SET email = EXCLUDED.email,last_name = EXCLUDED.last_name, first_name = EXCLUDED.first_name;
+
+INSERT 0 1
+```
+
+control + L to clear the screen terminal
+
+
+#### FOREIGN KEYS & JOINS AND RELATIONSHIP
+
+![[Screenshot 2025-06-16 at 10.28.55 AM.png]]
+**Primary Key**: Can uniquely identify a row in a table
+**Foreign Key**: Establishes relationship with another table's primary key
+Foreign Key is a column that reference a primary key in another table.  In order for it works the TYPE has to be the same (BIGINT = BIGINT)
+
+#### ADDING A FOREIGN KEY CONSTRAINT
+```SQL
+In this specific example the code will not work because car does not exists yet so we need to change the order and put the car table first
+```
+![[Screenshot 2025-06-16 at 11.03.39 AM.png]]
+#### UPDATING FOREIGN KEYS ![[Screenshot 2025-06-16 at 11.10.47 AM.png]]
+```SQL
+UPDATE person SET car_id = 2 WHERE id = 1;
+dove id = 1 in questo caso fernanda assegniamo il car_id = 2 che sarebbe la gmc
+
+UPDATE person SET car_id = 1 WHERE id = 2;
+
+
+```
+You can only assign a foreign key when there is a relation in the other table
+
+JOINS GENERAL
+![[Screenshot 2025-06-16 at 2.30.03 PM.png]]
+#### INNER JOINS / JOIN
+INNER JOIN is SQL Join default
+Combine two tables, it takes whatever is in common in both tables
+A and B = A + B = C  which is a temporary table.
+
+
+```SQL
+SELECT * FROM person JOIN car ON person.car_id = car.id;
+
+\x expanded display mode
+```
+![[Screenshot 2025-06-16 at 12.43.02 PM.png]]
+VISUAL EXAMPLE:
+customer table:
+```
+customer_id | name
+1.          | Alice
+2.          | Bob
+3.          | Carol
+
+```
+Orders table:
+```
+order_id | customer_id | product
+101.     | 1           | Laptop
+102.     | 2           | Mouse
+103.     | 1           | Keyboard
+104.     | 4           | Phone
+```
+
+```SQL
+SELECT customer.name, orders.product FROM customers
+JOIN orders ON customers.customer_id = orders.customer_id;
+```
+
+```RESULT =
+name.     | product
+Alice.    | Laptop
+Alice.    | Keyboard
+Bob.      | Mouse
+```
+![[Screenshot 2025-06-16 at 2.15.43 PM.png]]
+![[Screenshot 2025-06-16 at 2.17.15 PM.png]]
+![[Screenshot 2025-06-16 at 2.20.29 PM.png]]
+
+
+UNION
+![[Screenshot 2025-06-16 at 2.43.08 PM.png]]
+Union does not report duplicates value
+Union reports every value
+# SQL JOIN Syntax Table
+
+|JOIN Type|SQL Syntax|Description|
+|---|---|---|
+|**INNER JOIN**|`SELECT A.column1, B.column2 FROM TableA A INNER JOIN TableB B ON A.key = B.key;`|Returns rows where keys match in both tables (A ∩ B).|
+|**LEFT JOIN**|`SELECT A.column1, B.column2 FROM TableA A LEFT JOIN TableB B ON A.key = B.key;`|Returns all rows from TableA, with matching rows from TableB; NULL if no match.|
+|**RIGHT JOIN**|`SELECT A.column1, B.column2 FROM TableA A RIGHT JOIN TableB B ON A.key = B.key;`|Returns all rows from TableB, with matching rows from TableA; NULL if no match.|
+|**FULL OUTER JOIN**|`SELECT A.column1, B.column2 FROM TableA A FULL OUTER JOIN TableB B ON A.key = B.key;`|Returns all rows from both tables; NULL where no match exists.|
+
+# Quick Visual Summary
+
+|A Exists|B Exists|INNER JOIN|LEFT JOIN|RIGHT JOIN|FULL OUTER JOIN|
+|---|---|---|---|---|---|
+|✅|✅|✅|✅|✅|✅|
+|✅|❌|❌|✅|❌|✅|
+|❌|✅|❌|❌|✅|✅|
+
+# Example Tables
+
+## TableA (Customers)
+
+|CustomerID|Name|
+|---|---|
+|1|Alice|
+|2|Bob|
+|3|Carol|
+
+## TableB (Orders)
+
+|OrderID|CustomerID|
+|---|---|
+|101|1|
+|102|2|
+|104|4|
+
+# Example Queries
+
+## INNER JOIN
+
+```sql
+SELECT Customers.Name, Orders.OrderID
+FROM Customers
+INNER JOIN Orders ON Customers.CustomerID = Orders.CustomerID;
+```
+
+## LEFT JOIN
+
+```sql
+SELECT Customers.Name, Orders.OrderID
+FROM Customers
+LEFT JOIN Orders ON Customers.CustomerID = Orders.CustomerID;
+```
+
+## RIGHT JOIN
+
+```sql
+SELECT Customers.Name, Orders.OrderID
+FROM Customers
+RIGHT JOIN Orders ON Customers.CustomerID = Orders.CustomerID;
+```
+
+## FULL OUTER JOIN
+
+```sql
+SELECT Customers.Name, Orders.OrderID
+FROM Customers
+FULL OUTER JOIN Orders ON Customers.CustomerID = Orders.CustomerID;
+```
+
+
+#### DELETING FOREIGN KEYS
+
+Once the foreign keys is assigned to a primary key, if we try to cancel the foreign key it doesn't allow us
+```
+
+DELETE FROM car WHERE id = 13;
+ERROR:  update or delete on table "car" violates foreign key constraint "person_car_id_fkey" on table "person"
+DETAIL:  Key (id)=(13) is still referenced from table "person".
+```
+
+If you need to update/remove a record make sure to remove the foreign keys constraint first by: ![[Screenshot 2025-06-17 at 9.20.32 AM.png]]
+First we need to remove the car_id from John
+and then we can safely remove the car table.
+
+Two options:
+- Delete johns
+- Or Update the car id to null and delete the actual car
+
+DELETE JONH
+```SQL
+DELETE FROM person WHERE id = 9000;
+
+DELETE FROM car WHERE id = 13;
+```
+
+UPDATE car_id to NULL
+```SQL
+UPDATE person SET car_id = NULL WHERE id = 9000;
+
+DELETE FROM car WHERE id = 13;
+```
+
+
+#### SEQUENCES
+
+BIGSERIAL DATA TYPE that auto increments an integer number.
+
+```SQL
+ALTER SEQUENCE person_id_seq RESTART WITH 10; restart the sequence from a specified number
+```
+
+#### EXTENSION
+Functions to add extra functionality to the database
+```
+To see available functionality
+SELECT * FROM pg_available_extensions;
+```
+
+#### AGE FUNCTION using uuid-ossp
+
+INSTALLING EXTENSION BEFORE USING IT:
+```SQL
+	CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+```
+
+GENERATE UUID invoking the functions ![[Screenshot 2025-06-17 at 11.37.58 AM.png]]
+```sql
+SELECT uuid_generate_v4();
+
+```
+![[Screenshot 2025-06-17 at 11.39.02 AM.png]]
+
+#### UUID in ACTIONS:
+
+```SQL
+SELECT * FROM person JOIN car USING (car_uid)
+```
+Because both table have the car_uid column
+
+
+#### GENERATE A CSV WITH POSTGRES
+![[Screenshot 2025-06-17 at 12.02.12 PM.png]]
+
+```SQL
+ \copy (SELECT * FROM person LEFT JOIN car ON car.car_uid = person.car_uid) TO '/Users/robertodibari/Desktop/results.csv ' DELIMITER ',' CSV HEADER;
+```
+
+
+
+#### EXECUTE ORDER VS CODING ORDER
+
+CODING ORDER
+```SQL
+SELECT DISTINCT col1, SUM(col2)
+FROM table
+WHERE col = 10
+GROUP BY col1
+HAVING SUM(col2) > 30
+ORDER BY col1 ASC
+LIMIT 2
+```
+![[Screenshot 2025-06-19 at 9.19.59 AM.png]]
+
+EXECUTE ORDER
+
+DATABASE
+1- FROM table
+2- WHERE Col = 10
+3- GROUP BY Col 1
+4- HAVING
+5- SELECT DISTINCT
+![[Screenshot 2025-06-19 at 9.21.44 AM.png]]
+
+#### DATA DEFINITION (DDL)
+
+CREATE, ALTER, DROP
+```SQL
+CREATE TABLE persons (
+id INT NOT NULL,
+person_name VARCHAR(50) NOT NULL,
+birth_date DATE,
+phone VARCHAR(15) NOT NULL,
+CONSTRAINT pk_person PRIMARY KEY (id) );
+```
+
+
+ALTER
+add new columns or change data type
+alwauys adding new columns
+```SQL
+ALTER TABLE persons
+ADD email VARCHAR(50) NOT NULL;
+```
+
+DELETE A COLUMN:
+```SQL
+ALTER TABLE persons
+DROP COLUMNS phone;
+```
+
+DELETE TABLE
+```SQL
+DROP TABLE persons;
+```
+
+
+#### DATA MANIPULATION(DML) INSERT, UPDTE, DELETE
+
+##### INSERT
+will add a new row into your table
+
+Two distinct way:
+1- Manually adding values to the table
+```SQL
+	INSERT INTO table_name (column1, column2, column3)
+	 VALUES (value1, value2, value3)
+```
+If no columns are specified sql expect you to add new values in each columns
+
+Rules:
+Number of values must match the number of columns
+Columns and values must be in the same order
+Matching data types, Columns count, COnstraints.
+
+
+2- Inserting values using select using a different table from source table to target table.
+```SQL
+INSERT INTO persons (id, person_name, birth_date, phone)
+SELECT id, first_name, NULL, 'Unknown' FROM customers;
+```
+
+'Unknown must be specified because it is a primary key'
+INSERT INTO target table  (id, person_name, birth_date, phone)
+SELECT  id, first_name, null, 'unknown' FROM source_table
+
+##### UPDATE
+
+```SQL
+UPDATE table_name
+SET column1 = value1,
+	column2 = value2
+WHERE condition
+```
+
+Update all the NULL score in the customers table with 0
+
+```SQL
+UPDATE customers
+SET score = 0
+WHERE score IS NULL;
+```
+
+
+
+##### DELETE
+
+```SQL
+DELETE FROM table_name
+WHERE condition
+```
+
+Delete all the datas from a table JUST THE DATA not the table!
+we can use TRUNCATE clears the whole table at once without checking or logging performs better than delete
+
+```SQL
+TRUNCATE TABLE person;
+```
+
+
+#### CHAPTER 5 FILTERING DATA
+![[Screenshot 2025-06-20 at 12.43.12 PM.png]]
+
+
+To use multiple conditions we can use
+``` SQL
+SELECT column, another_column, … FROM mytable WHERE _condition_ AND/OR _another_condition_ AND/OR …**;
+```
+
+#### IN KEYWORD
+
+``` SQL
+SELECT * FROM PERSON WHERE country_of_birth = 'China' or country_of_birth ='Brazil' or country_of_birth = 'France';
+
+
+SELECT  * FROM person WHERE country_of_birth IN ('China', 'Brazil', 'France');
+
+SELECT * FROM person WHERE country_of_birth IN ('China', 'Brazil', 'France') ORDER BY country_of_birth;
+
+```
+
+#### LIKE
+it search for a patterns in a text
+
+![[Screenshot 2025-06-20 at 1.12.03 PM.png]]
+
+
+```SQL
+SELECT * FROM person WHERE email LIKE '%.com'; % represents any character before .com
+
+SELECT * FROM person WHERE email LIKE '%@google.%'; before anything and after the dot. anything so we could get stuff like google.uk.com or google.it.com
+
+
+______ means that t has to match everysingle underscore to a char or value
+
+SELECT * FROM person WHERE email LIKE '___@%';
+SELECT * FROM person WHERE country_of_birth LIKE 'p%';  Doesnt return anything.
+SELECT * FROM person WHERE country_of_birth ILIKE 'p%';
+ILIKE IGNORE CASE
+```
+
+| OPERATOR                     | CONDITION                                                      | SQL Example                   |
+| ---------------------------- | -------------------------------------------------------------- | ----------------------------- |
+| =, (!= or <>), <, <=, >, >=, | Standard numerical Operators                                   | col_name != 4                 |
+| BETWEEN... AND ...           | Number is within range of two values (inclusive)               | col_name BETWEEN 1.5 AND 10.5 |
+| NOT BETWEEN ... AND ...      | Number is not withing range of two values and it is inclusive. | col_name NOT BETWEEN 1 AND 10 |
+| IN (...)                     | Number exists in a list                                        | col_name IN (2,4,6)           |
+| NOT IN (...)                 | Number does not exist in a list                                | col_name NOT IN (1,3,5)       |
+| LIKE                         |                                                                |                               |
+
+#### LIMIT OFFSET AND FETCH
+TOP*
+```SQL
+SELECT * FROM person LIMIT 10; to get the first 10 columns
+
+SELECT * FROM person OFFSET 5 LIMIT 10; from 5 + 10 rows
+
+SELECT * FROM person OFFSET 5 FETCH FIRST 5 ROW ONLY*
+"FROM ROW 5 TAKE ONLY THE NEXT 5 ROWS "
+```
+
+```SQL
+-- Retrieve the top 3 Customers with the highest Scores
+SELECT * FROM customers
+ORDER BY score DESC
+LIMIT 3;
+
+-- Retrieve lowest two customers
+SELECT * FROM customers
+ORDER BY score
+LIMIT 2;
+
+-- Get the two most recent orders
+SELECT *  FROM orders
+ORDER BY order_date DESC
+LIMIT 2;
+```
+
+| Fetch Syntax                          | Description                                                 | Example                                                                        |
+| ------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| FETCH FIRST n ROWS ONLY               | Limit results set to first n rows (SQL standard)            | `SELECT * FROM employees FETCH FIRST 10 ROWS ONLY`                             |
+| FETCH NEXT n ROWS ONLY                | Limit results set to next n rows (used with offset)         | `SELECT * FROM employees OFFSET 5 ROWS FETCH NEXT 10 ROWS ONLY`                |
+| OFFSET n ROWS FETCH FIRST m ROWS ONLY | Skips n rows, then returns m rows                           | `SELECT * FROM products ORDER BY price OFFSET 20 ROWS FETCH FIRST 5 ROWS ONLY` |
+| FETCH ABSOLUTE n                      | Positions cursor at specific row number (with cursors)      | `FETCH ABSOLUTE 15 FROM my_cursor`                                             |
+| FETCH RELATIVE n                      | Moves cursor n positions relative to current (with cursors) | `FETCH RELATIVE 3 FROM my_cursor`                                              |
+| FETCH FIRST                           | Moves cursor to first row (with cursors)                    | `FETCH FIRST FROM my_cursor`                                                   |
+| FETCH LAST                            | Moves cursor to last row (with cursors)                     | `FETCH LAST FROM my_cursor`                                                    |
+| FETCH NEXT                            | Moves cursor to next row (with cursors)                     | `FETCH NEXT FROM my_cursor`                                                    |
+| FETCH PRIOR                           | Moves cursor to previous row (with cursors)                 | `FETCH PRIOR FROM my_cursor`                                                   |
+|                                       |                                                             |                                                                                |
+
+#### COMBINING DATA
+![[Screenshot 2025-06-20 at 1.20.36 PM.png]]
+Reason
+1) Recombine Data
+2) Data Enrichment 'Getting extra data'
+3) Check for Existence "Filtering"
+![[Screenshot 2025-06-20 at 1.31.16 PM.png]]![[Screenshot 2025-06-20 at 1.31.59 PM.png]]
+
+USING:
+When two joining tables that share common columns with identical names,  the `USING` clause provides a conciese way to specificy the join condition instead of using ON
+```SQL
+SELECT c.name AS country, l.name AS language, official
+
+FROM countries AS c
+
+INNER JOIN languages AS l
+
+-- Match using the code column
+
+USING (code)
+```
+
+JOIN TYPES:
+
+Gets all the data without joining the two tables.
+
+```SQL
+SELECT * FROM A;
+SELECT * FROM B;
+```
+
+INNER JOIN
+Returns only matching rows from both tables.
+The order of table doesn't matter you could start from B or A the results will always be the same!
+```SQL
+SELECT * FROM A
+INNER JOIN B
+ON A.key = B.key
+```
+![[Screenshot 2025-06-20 at 1.36.04 PM.png]]
+![[Screenshot 2025-06-16 at 2.37.03 PM.png]]
+
+```SQL
+Get all the customers along with their orders, but only for customers who have placed an order.
+SELECT * FROM customers
+INNER JOIN orders
+ON customers.id = orders.customer_id;
+
+We can also use alias when the name are long for example
+
+SELECT
+c.id,
+c.first_name,
+o.order_id,
+o.sales
+FROM customers AS c
+INNER JOIN orders as O
+on c.id = o.customer_id
+```
+
+#### LEFT JOIN
+
+Having two tables A and B combine two tables where it includes all the rows from the left table and record from table B that have a corresponding relationship and those without a relationship
+![[Screenshot 2025-06-20 at 3.27.15 PM.png]]
+
+```SQL
+SELECT * FROM person
+LEFT JOIN car ON car.id = person.car_id;
+```
+
+![[Screenshot 2025-06-16 at 12.40.53 PM.png]]
+
+```SQL
+SELECT * FROM person                                                       LEFT JOIN car ON car.id = person.car_id                                    WHERE car.* IS NULL;
+```
+![[Screenshot 2025-06-16 at 12.41.34 PM.png]]
+![[Screenshot 2025-06-16 at 2.38.30 PM.png]]
+
+#### RIGHT JOIN
+![[Screenshot 2025-06-20 at 4.16.32 PM.png]]
+```SQL
+
+SELECT * FROM customers RIGHT JOIN orders ON customers.id = orders.customer_id;
+ id | first_name | country | score | order_id | customer_id | order_date | sales
+----+------------+---------+-------+----------+-------------+------------+-------
+  1 | Maria      | Germany |   350 |     1001 |           1 | 2021-01-11 |    35
+  2 |  John      | USA     |   900 |     1002 |           2 | 2021-04-05 |    15
+  3 | Georg      | UK      |   750 |     1003 |           3 | 2021-06-18 |    20
+    |            |         |       |     1004 |           6 | 2021-08-31 |    10
+(4 rows)
+```
+Remaing action type from the right table any right join can be re-written as left join
+![[Screenshot 2025-06-16 at 2.39.58 PM.png]]
+
+
+#### FULL JOIN  or OUTER JOIN
+ it combines all the columns same value based on one common dimension
+ orders doesn't matter
+ ![[Screenshot 2025-06-20 at 4.27.59 PM.png]]
+
+![[Screenshot 2025-06-16 at 2.41.18 PM.png]]
+```SQL
+SELECT * FROM customers FULL JOIN orders  ON orders.customer_id = customers.id;
+ id | first_name | country | score | order_id | customer_id | order_date | sales
+----+------------+---------+-------+----------+-------------+------------+-------
+  1 | Maria      | Germany |   350 |     1001 |           1 | 2021-01-11 |    35
+  2 |  John      | USA     |   900 |     1002 |           2 | 2021-04-05 |    15
+  3 | Georg      | UK      |   750 |     1003 |           3 | 2021-06-18 |    20
+    |            |         |       |     1004 |           6 | 2021-08-31 |    10
+  5 | Peter      | USA     |     0 |          |             |            |
+  4 | Martin     | Germany |   500 |          |             |            |
+(6 rows)
+
+MyDatabase=#
+```
+
+
+#### ADVANCED JOIN
+##### LEFT ANTI JOIN
+
+![[Screenshot 2025-06-20 at 4.34.48 PM.png]]![[Screenshot 2025-06-20 at 4.37.32 PM.png]]
+
+```SQL
+SELECT * FROM customers LEFT JOIN orders ON customers.id = orders.customer_id WHERE orders.customer_id IS NULL;
+```
+
+##### RIGHT ANTI JOIN
+![[Screenshot 2025-06-20 at 5.07.20 PM.png]]
+
+##### FULL ANTI JOIN
+![[Screenshot 2025-06-21 at 1.26.24 PM.png]]
+
+
+```SQL
+
+SELECT * FROM customers
+FULL JOIN orders
+ON customers.id = orders.customer_id
+WHERE customers.id IS NULL OR
+orders.customer_id IS NULL;
+
+ id | first_name | country | score | order_id | customer_id | order_date | sales
+----+------------+---------+-------+----------+-------------+------------+-------
+    |            |         |       |     1004 |           6 | 2021-08-31 |    10
+  5 | Peter      | USA     |     0 |          |             |            |
+  4 | Martin     | Germany |   500 |          |             |            |
+```
+
+```SQL
+Get all customers along with their orders, but only for customers who have placed an order (without Using inner Join )
+
+SELECT * FROM customers
+LEFT JOIN orders ON
+customers.id = orders.customer_id
+WHERE orders.customer_id IS NOT NULL;
+```
+
+
+#### CROSS JOIN
+![[Screenshot 2025-06-21 at 1.57.48 PM.png]]
+Use to generate data especially during similation or testing
+
+
+#### HOW TO CHOOSE BETWEEN JOIN TYPES
+![[Screenshot 2025-06-21 at 2.03.29 PM.png]]
+
+
+HOW TO DO MULTIPLE JOINS WITH 3 OR MORE TABLES
+
+```SQL
+USING THE SALESDB, RETRIEVE A LIST OF ALL ORDERS, ALONG WITH THE RELATED CUSTOMER, PRODUCT, AND EMPLOYEE DETAILS.
+
+salesdb=# SELECT
+o.OrderID,
+o.Sales,
+c.FirstName AS CustomerFirstName,
+c.LastName AS CustomerLastName,
+p.Product AS ProductName,
+p.Price,
+e.FirstName AS EmployeeFirstName,
+e.LastName AS EmployeeLastName
+FROM Sales.Orders AS o
+LEFT JOIN Sales.Customers AS c ON o.CustomerID = c.CustomerID
+LEFT JOIN Sales.Products as p ON o.ProductID = p.ProductID
+LEFT JOIN Sales.Employees AS e ON o.SalesPersonID = e.EmployeeID;
+```
+![[Screenshot 2025-06-23 at 4.35.13 PM.png]]
+
+
+SET OPERATORS
+Combine the results of multiple queries into a single results set
+
+Types:
+- Union
+- Union All
+- Except (minus)
+- Intersect
+
+Rules
+#1 Set operators can be used almost in all clauses
+	WHERE | JOIN | GROUP BY | HAVING
+	only ORDER BY only once and at the end of the query
+#2 The numbers of columns must be the same  in each query
+#3 Data Types of COlumns in each query must be compatible "same data types"
+#4 The order of columns must be the same
+#5 The column names in the result set are determined by the column names specified in the first query.
+#6 Even if all rules are met and SQL shows no errors the result may be incorrect
+	Incorrect column selection leads to inaccurate results.
+
+
+Syntax
+```SQL
+
+SELECT FirstName, LastName FROM customers
+UNION
+SELECT FirstName, LastName FROM employees
+```
+![[Screenshot 2025-06-23 at 4.45.32 PM.png]]
+
+
+### UNION
+returns all distrinct rows from both query.
+
+Removes duplicates rows from the results.
+Orders does not matter just keep in mind the naming of the column are given from the first script
+
+```SQL
+Combine the data from employees and customers into one table
+SELECT customerid, firstname, lastname
+FROM Sales.Customers
+UNION
+SELECT employeeid, firstname,lastname
+FROM Sales.Employees ORDER BY customerid;
+```
+
+
+### UNION ALL
+returns all rows from both query, including duplicates
+
+Differences between Union and Union ALL
+- Union ALL is generally faster than Union because it doesn't have to check for duplicates
+```SQL
+Combine the data from employees and customers into one table with duplicates
+SELECT customerid, firstname, lastname
+FROM Sales.Customers
+UNION ALL
+SELECT employeeid, firstname,lastname
+FROM Sales.Employees ORDER BY customerid;
+```
+
+
+#### EXCEPT OR MINUS
+
+Returns all distinct rows from the first query that are not found in the second query
+The order of the query is going to condition the query
+![[Screenshot 2025-06-23 at 5.26.31 PM.png]]
+```SQL
+SELECT customerid, firstname, lastname FROM Sales.Customers
+EXCEPT
+SELECT employeeid, firstname,lastname FROM Sales.Employees;
+```
+
+
+#### INTERSECT
+![[Screenshot 2025-06-23 at 5.42.33 PM.png]]
+
+
+```SQL
+SELECT customerid, firstname, lastname FROM Sales.Customers
+INTERSECT
+SELECT employeeid, firstname,lastname FROM Sales.Employees;
+```
+
+
+
+SET CASES FOR DATA ENGINEERING / ANALYSIS
+![[Screenshot 2025-06-23 at 5.47.23 PM.png]]
+```SQL
+Orders data are store in separate tables (orders and OrderArchive)
+Combine all orders data into one report without duplicates
+
+SELECT * FROM Sales.Orders
+UNION
+SELECT * FROM Sales.OrdersArchive;
+```
+You should not be using `(*)` you should least each column
+![[Screenshot 2025-06-23 at 6.00.06 PM.png]]
+
+#### CHAPTER 7 SQL FUNCTIONS
+Sometimes you want to Clean, Manipulate, Analyize or Transform data in your tables
+
+Input Value's  ----> Functions -------> Output Values
+
+A Built-in SQL code:
+- Accepts an input value
+- Processes it
+- returns an output value
+
+#1 Single Row functions  ------------> 'Maria' -------> LOWER() ----------> 'maria'
+#2 Multi Row functions --------------> 30, 10, 20, 40 ---> SUM() ---------> 100
+
+
+NESTED FUNCTION ARE A THING
+![[Screenshot 2025-06-23 at 6.08.02 PM.png]]
+
+
+#### STRING FUNCTION
+![[Screenshot 2025-06-23 at 6.10.34 PM.png]]![[Screenshot 2025-06-23 at 6.11.08 PM.png]]
+
+##### CONCAT()
+```SQL
+Show a list of customers first names together with their country in one columns
+SELECT CONCAT(firstname,' ', country ) as FirstName_Country  FROM Sales.Customers;
+
+```
+
+##### TRIM() AND LENGTH
+![[Screenshot 2025-06-23 at 8.55.00 PM.png]]
+```SQL
+SELECT firstname FROM customers WHERE firstname != TRIM(firstname)
+```
+
+LEN IN POSTGRESQL IS LENGTH()
+```SQL
+SELECT
+first_name, LENGTH(first_name) len_name,
+LENGTH(TRIM(first_name)) len_trim_name, LENGTH(first_name) - LENGTH(TRIM(first_name)) flag
+FROM customers WHERE first_name != TRIM(first_name);
+```
+
+
+REPLACE()
+IT TAKES THREE ARGUMENTS the string, what you want to change and the substitute or empty space
+
+```
+REPLACE('954-736-0185', '-', ' ')
+```
+
+
+#### LEFT, RIGHT, SUBSTRING FUNCTIONS
+
+LEFT extracts specific number of characters from the start
+Right extracts specific number of character from the end
+
+LEFT(value, #characters)
+RIGHT(value, #characters
+SUBSTRING(VALUE, start, length) PAIR IT WITH LENGTH TO DYNAMICALLY TAKE EVERYTHING LIKE
+```SQL
+SELECT first_name, SUBSTRING(TRIM(first_name), 2, LEN(first_name)) as sub_name FROM customers;
+```
+
+```SQL
+SELECT first_name, LEFT(first_name,2) FROM CUSTOMERS;
+SELECT first_name, RIGHT(first_name,2) FROM CUSTOMERS;
+SELECT first_name, SUBSTRING(first_name, 2, 2) FROM customers;
+```
+![[Screenshot 2025-06-24 at 10.42.01 AM.png]]
+
+
+NUMBER FUNCTIONS
+ROUND
+![[Screenshot 2025-06-24 at 10.45.51 AM.png]]
+
+```SQL
+SELECT 3.516, ROUND(3.516, 2) AS round2
+SELECT 3.516, ROUND(3.516, 1) AS round1
+SELECT 3.516, ROUND(3.516, 0) AS round0
+```
+
+
+ABS()
+
+#### DATE AND TIME FUNCTIONS()
+![[Screenshot 2025-06-24 at 10.51.30 AM.png]]3 sources to query the dates:
+#1 Dates stored inside our database
+#2 Hardcoded date strings
+#3 GETDATE() FUNCTION in POSTGRESQL is CURRENT_TIMESTAMP or CURRENT_DATE
+	it returns the current date and time at the moment when the query is executed
+
+
+##### HOW TO MANIPULATE DATES WITH FUNCTIONS
+
+Extractions different parts of the date
+Change the format
+Calculations with add or diff
+Validation
+![[Screenshot 2025-06-25 at 9.27.54 AM.png]]![[Screenshot 2025-06-25 at 9.28.43 AM.png]]
+
+
+
+PARTS EXTRACTIONS
+DAY- Returns day from a date DAY(date)
+MONTH -Returns month from a date  MONTH(date)
+YEAR - Returns year from a date  YEAR(date)
+
+``` SQL
+EXTRACT(field FROM source)
+```
+
+| Field             | Description                        | Example Value |
+| ----------------- | ---------------------------------- | ------------- |
+| `year`            | Year                               | 2025          |
+| `month`           | Month (1–12)                       | 6             |
+| `day`             | Day of the month (1–31)            | 25            |
+| `hour`            | Hour (0–23)                        | 14            |
+| `minute`          | Minute (0–59)                      | 30            |
+| `second`          | Second (includes fractional)       | 45.123456     |
+| `dow`             | Day of week (0=Sunday, 6=Saturday) | 2             |
+| `isodow`          | ISO day of week (1=Mon, 7=Sun)     | 3             |
+| `doy`             | Day of year (1–365/366)            | 176           |
+| `week`            | Week of year (1–53)                | 26            |
+| `quarter`         | Quarter of year (1–4)              | 2             |
+| `epoch`           | Seconds since 1970-01-01 00:00:00  | 1719307200    |
+| `millennium`      | Millennium (e.g., 2 for 2025)      | 3             |
+| `century`         | Century (e.g., 21 for 2025)        | 21            |
+| `decade`          | Decade (e.g., 202 for 2025)        | 202           |
+| `milliseconds`    | Milliseconds part (intervals only) |               |
+| `microseconds`    | Microseconds part (intervals only) |               |
+| `timezone`        | Time zone offset from UTC          | -4            |
+| `timezone_hour`   | Time zone hour part                | -4            |
+| `timezone_minute` | Time zone minute part              | 0             |
+``` SQL
+SELECT  OrderID, CreationTime,EXTRACT (year FROM CreationTime)AS Year, EXTRACT (month FROM CreationTime) As Month, EXTRACT (day FROM CreationTime) As Day FROM Sales.Orders;
+
+
+ orderid |    creationtime     | year | month | day
+---------+---------------------+------+-------+-----
+       1 | 2025-01-01 12:34:56 | 2025 |     1 |   1
+       2 | 2025-01-05 23:22:04 | 2025 |     1 |   5
+       3 | 2025-01-10 18:24:08 | 2025 |     1 |  10
+       4 | 2025-01-20 05:50:33 | 2025 |     1 |  20
+       5 | 2025-02-01 14:02:41 | 2025 |     2 |   1
+       6 | 2025-02-06 15:34:57 | 2025 |     2 |   6
+       7 | 2025-02-16 06:22:01 | 2025 |     2 |  16
+       8 | 2025-02-18 10:45:22 | 2025 |     2 |  18
+       9 | 2025-03-10 12:59:04 | 2025 |     3 |  10
+      10 | 2025-03-16 23:25:15 | 2025 |     3 |  16
+```
+
+
+DATEPART()
+Returns a specific part of a date as a number always a integer like the corresponding week, quarter
+
+EXTRACT century FROM tTimestamp
+always by using EXTRACT
+
+```SQL
+SELECT EXTRACT(week FROM CreationTime) as Week, EXTRACT(quarter FROM CreationTime) as Quarter FROM Sales.Orders;
+```
+
+
+DATENAME()
+Instead of extracting an integer it extracts the string representing the name of the month, year, day of the week etc it does not exists a correspondend function in postgreSQL
+but you can achive the same by using
+
+```SQL
+TO_CHAR(date_value, 'Month')
+
+SELECT
+  TO_CHAR(NOW(), 'Month') AS full_month,
+  TO_CHAR(NOW(), 'Mon')   AS short_month,
+  TO_CHAR(NOW(), 'Day')   AS full_day,
+  TO_CHAR(NOW(), 'Dy')    AS short_day;
+
+
+salesdb=# SELECT TO_CHAR(CreationTime, 'Month') AS Month, TO_CHAR(CreationTime, 'Day') FROM Sales.Orders;
+
+```
+
+
+DATETRUNC()
+![[Screenshot 2025-06-25 at 10.18.15 AM.png]]
+```SQL
+SELECT date_trunc('hour', TIMESTAMP '2001-02-16 20:38:40');
+_Result:_ `2001-02-16 20:00:00`
+SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
+_Result:_ `2001-01-01 00:00:00`
+SELECT date_trunc('day', TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40+00');
+_Result:_ `2001-02-16 00:00:00-05`
+SELECT date_trunc('day', TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40+00', 'Australia/Sydney');
+_Result:_ `2001-02-16 08:00:00-05`
+SELECT date_trunc('hour', INTERVAL '3 days 02:47:33');
+_Result:_ `3 days 02:00:00`
+
+
+SELECT OrderID, CreationTime, date_trunc('Day', CreationTime) as Date_Trunc_Day FROM Sales.Orders;
+
+
+SELECT OrderID, CreationTime, date_trunc('Year', CreationTime) as Date_Trunc_Day FROM Sales.Orders;
+
+SELECT date_trunc('Month',CreationTime), COUNT(*) FROM Sales.Orders GROUP BY date_trunc('Month',CreationTime);
+
+
+
+
+How many orders were placed each year
+SELECT EXTRACT(year FROM orderdate) as Year, Count(*) OrdersNumbers FROM Sales.Orders GROUP BY Year;
+ year | ordersnumbers
+------+---------------
+ 2025 |            10
+
+How many orders were placed each months
+SELECT TO_CHAR(orderdate, 'Month') as Months, Count(*) OrdersNumbers FROM Sales.Orders GROUP BY Months;
+
+Show all orders that wer placed during the month of February
+SELECT * FROM Sales.Orders WHERE EXTRACT(month FROM orderdate)  = 2;
+
+SELECT TO_CHAR(orderDate, 'Month') As Month, COUNT(*) FROM Sales.Orders WHERE TRIM(TO_CHAR(orderdate,'Month'))= 'February'  GROUP BY TO_CHAR(orderdate, 'Month');
+```
+
+REMEMBER TO USE TRIM BECAUSE TOOCHAR RETURNS A PADDED STRING 'FEBRUARY ' NOT EXACTLY 'FEBRUARY'
+
+Always use numbers function to search for data because it is faster than the strings ![[Screenshot 2025-06-25 at 11.01.46 AM.png]]
+#### FORMAT AND CASTING
+![[Screenshot 2025-06-25 at 11.09.47 AM.png]]![[Screenshot 2025-06-25 at 11.10.17 AM.png]]
+
+##### FORMATTING
+Changing the format of a value from one to another chaging how the date looks like
+![[Screenshot 2025-06-25 at 11.11.25 AM.png]]
+
+FORMAT(value, format [,culutre]) culture is optional
+FORMAT(orderDate, 'dd/MM/yyyy')
+FORMAT (orderDate, 'dd/MM/yyyy', 'ja-JP')
+
+IN POSTGRES
+TO_CHAR(orderDate, 'dd/mm/yyyy')
+
+```SQL
+SELECT OrderID, CreationTime,
+ TO_CHAR(CreationTime, 'dd') dd,
+ TO_CHAR(CreationTime, 'ddd') ddd,
+ TO_CHAR(CreationTime, 'dddd') dddd,
+ TO_CHAR(CreationTime, 'mm') mm,
+ TO_CHAR(CreationTime, 'mmm') mmm,
+ TO_CHAR(CreationTime, 'mmmm') mmmmm
+ FROM sales.orders;
+ orderid |    creationtime     | dd | ddd | dddd | mm | mmm | mmmmm
+---------+---------------------+----+-----+------+----+-----+-------
+       1 | 2025-01-01 12:34:56 | 01 | 001 | 0014 | 01 | 01m | 0101
+       2 | 2025-01-05 23:22:04 | 05 | 005 | 0051 | 01 | 01m | 0101
+       3 | 2025-01-10 18:24:08 | 10 | 010 | 0106 | 01 | 01m | 0101
+       4 | 2025-01-20 05:50:33 | 20 | 020 | 0202 | 01 | 01m | 0101
+       5 | 2025-02-01 14:02:41 | 01 | 032 | 0327 | 02 | 02m | 0202
+       6 | 2025-02-06 15:34:57 | 06 | 037 | 0375 | 02 | 02m | 0202
+       7 | 2025-02-16 06:22:01 | 16 | 047 | 0471 | 02 | 02m | 0202
+       8 | 2025-02-18 10:45:22 | 18 | 049 | 0493 | 02 | 02m | 0202
+       9 | 2025-03-10 12:59:04 | 10 | 069 | 0692 | 03 | 03m | 0303
+      10 | 2025-03-16 23:25:15 | 16 | 075 | 0751 | 03 | 03m | 0303
+```
+##### CASTING
+Changing the data type from one to another
+![[Screenshot 2025-06-25 at 11.13.05 AM.png]]![[Screenshot 2025-06-25 at 11.31.14 AM.png]]
+
+#### SQL Servers:
+![[Screenshot 2025-06-25 at 11.32.19 AM.png]]
+
+#### POSTGRESQL
+| Pattern    | Description                            | Example Output |
+|------------|----------------------------------------|----------------|
+| YYYY       | 4-digit year                           | 2025           |
+| YY         | Last 2 digits of year                  | 25             |
+| MM         | 2-digit month (01–12)                  | 06             |
+| Mon        | Abbreviated month name                 | Jun            |
+| Month      | Full month name (padded)               | June           |
+| FMMonth    | Full month name (no padding)           | June           |
+| DD         | Day of month (01–31)                   | 25             |
+| D          | Day of week (1=Sunday, 7=Saturday)     | 3              |
+| Day        | Full weekday name (padded)             | Wednesday      |
+| FMDay      | Full weekday name (no padding)         | Wednesday      |
+| DY         | Abbreviated day name                   | Wed            |
+| DOY        | Day of year (001–366)                  | 177            |
+| W          | Week of month (1–5)                    | 4              |
+| WW         | Week of year (1–53)                    | 26             |
+| IW         | ISO week number                        | 26             |
+| Q          | Quarter (1–4)                          | 2              |
+| AM / PM    | Meridian indicator                     | PM             |
+| A.M. / P.M.| Meridian indicator with dots           | P.M.           |
+| HH         | Hour (1–12)                            | 2              |
+| HH12       | Hour (01–12)                           | 02             |
+| HH24       | Hour (00–23)                           | 14             |
+| MI         | Minutes (00–59)                        | 30             |
+| SS         | Seconds (00–59)                        | 45             |
+| MS         | Milliseconds (intervals only)          | 123            |
+| US         | Microseconds                           | 123456         |
+| TZ         | Time zone abbreviation                 | UTC            |
+| OF         | Time zone offset (e.g. +02:00)         | -04:00         |
+| RM         | Roman numeral month (I–XII)            | VI             |
+
+#### CONVERT()
+CONVERT(data_type, value , style )
+CONVERT (INT, '123')
+
+To **convert a string to an integer** in **PostgreSQL**, you have two main options:
+
+---
+
+### ✅ 1. **CAST() function**
+
+`SELECT CAST('123' AS INTEGER);`
+
+---
+
+### ✅ 2. **`::` typecast operator** (preferred by many PostgreSQL users)
+
+
+`SELECT '123'::INTEGER;`![[Screenshot 2025-06-25 at 11.48.05 AM.png]]
+
+
+#### DATE CALCULATIONS
+``` SQL
+-- SQL Server style (doesn't work in PostgreSQL)
+-- SELECT DATEADD(day, 30, order_date) FROM orders;
+
+-- PostgreSQL equivalent - much simpler!
+SELECT order_date + INTERVAL '30 days' FROM orders;
+SELECT order_date + 30 FROM orders;  -- Also works for days
+
+-- More examples
+SELECT current_date + INTERVAL '3 months';
+SELECT created_at + INTERVAL '2 hours 30 minutes';
+SELECT birth_date + INTERVAL '1 year';
+
+
+-- SQL Server style (doesn't work in PostgreSQL)
+-- SELECT DATEDIFF(day, start_date, end_date) FROM projects;
+
+-- PostgreSQL equivalent
+SELECT end_date - start_date AS days_difference FROM projects;
+SELECT current_date - birth_date AS age_in_days FROM employees;
+
+-- For different units, use EXTRACT
+SELECT EXTRACT(EPOCH FROM (end_date - start_date))/86400 AS days_decimal;
+SELECT EXTRACT(YEAR FROM AGE(end_date, start_date)) AS years_difference;
+```
+
+
+
+
+#### NULL FUNCTIONS
+Null means nothing, Unknown
+
+ISNULL() Replaes 'NULL' with a specified value
+
+ISNULL(value, replacemnt_value) limited to 2
+
+COALESCE(value1, value2, value3, ...) more than 2 values
+![[Screenshot 2025-06-26 at 1.54.11 PM.png]]
+
+```SQL
+SELECT CustomerID, Score, AVG(Score) OVER() AvgScores, AVG(COALESCE(Score,0)) OVER() AvgScore2 FROM sales.customers;
+
+
+ customerid | score |      avgscores       |      avgscore2
+------------+-------+----------------------+----------------------
+          1 |   350 | 625.0000000000000000 | 500.0000000000000000
+          2 |   900 | 625.0000000000000000 | 500.0000000000000000
+          3 |   750 | 625.0000000000000000 | 500.0000000000000000
+          4 |   500 | 625.0000000000000000 | 500.0000000000000000
+          5 |       | 625.0000000000000000 | 500.0000000000000000
+```
+
+Display the full name of customers in a single field by Merging their first and last names,and add 10 bonus points to each customers score
+
+IMPORTANT STRING CONCATENATION in postgres is done with `||`
+
+```SQL
+SELECT CustomerID, firstname, lastname,(firstname || ' ' || COALESCE(lastname,'')) AS FirstandLast, score FROM sales.customers;
+
+ customerid | firstname | lastname |  firstandlast   | score
+------------+-----------+----------+-----------------+-------
+          1 | Jossef    | Goldberg | Jossef Goldberg |   350
+          2 | Kevin     | Brown    | Kevin Brown     |   900
+          3 | Mary      |          | Mary            |   750
+          4 | Mark      | Schwarz  | Mark Schwarz    |   500
+          5 | Anna      | Adams    | Anna Adams      |
+```
+
+
+
+#### ISNULL AND COALESCE USE CASE
+can be used to handle the NULL before JOININ TABLES
+![[Screenshot 2025-06-27 at 5.16.09 PM.png]]
+
+So if we have null inside our table we will lose inputs and outputs when using joining
+
+Solution:
+```SQL
+SELECT a.year, a.type, a.orders, b.sales
+FROM table1 a
+JOIN table2 b
+ON a.year = b.year
+AND ISNULL (a.type, '') = ISNULL (b.type,'')
+
+```
+![[Screenshot 2025-06-27 at 5.19.48 PM.png]]
+
+Handle the NULL before sorting data
+CASE WHEN score IS NULL THEN 1 ELSE 0 END
+
+NULLIF
+
+NULLIF(value1,value2)
+NULLIF(Price, -1)
+![[Screenshot 2025-07-01 at 9.17.06 AM.png]]
+
+Use in order to flag or higlight special cases inside our data.
+![[Screenshot 2025-07-01 at 9.19.04 AM.png]]
+
+
+NULLIF Use Case
+Preventing the error of dividing by zero
+
+Tasks:
+Find the sales prices for each order by dividing the sales by the quantity
+```SQL
+SELECT
+OrderID,
+Sales,
+Quantity,
+Sales/NULLIF(Quantity, 0) AS Price
+FROM Sales.Orders;
+```
+
+
+IS NULL VS IS NOT NULL
+
+IS NULL returns TRUE if the value is NULL otherwise returns FALSE
+
+IS NOT NULL OPPOSITE
+
+Syntax
+Value IS NULL
+value IS NOT NULL
+
+A good case for IS NULL and IS NOT NULL is searching for missing informations
+
+Task: Identify the customers who has not score
+
+
+LEFT ANTI JOIN | RIGHT ANTI JOIN
+
+Finding the unmatched rows between two tables.
+
+Task:
+List all details for customers who have not placed any orders
+
+![[Screenshot 2025-07-01 at 3.09.37 PM.png]]![[Screenshot 2025-07-01 at 3.09.51 PM.png]]
+
+#### DATA POLICY
+
+set of rules that defines how data should be handled.
+
+#1 Only use NULLs and empty strings,  but avoid blank spaces.
+	TRIM function remove unwanted leading trailing spaces
+#2 Only use NULL and avoid using empty strings and bank spaces
+Replacing empty strings and blanks with NULL during data preparation before inserting into a database to optimize storage and performance
+#3 Use the default value 'Unknown" and avoid using nulls, empty strings, and blank spaces;
+	Replacing empty strings, blanks NULL with default value during data preparation before using it in reporting to improve readability and reduce confusion
+
+
+#### CASE STATEMENT
+
+Evaluates a list of conditions and returns a value when the first condition is met
+
+```SQL
+CASE
+	WHEN condition1 THEN results1
+	WHEN condition2 THEN results2
+	...
+	ELSE optional defeaut value
+END
+```
+
+
+###### MOST USEFUL USE CASES OF THE CASE STATEMENT
+
+**Main purpose is Data Transformation**
+Derive new informations by Creating new columns based on existing data without modifying the database
+
+**#1Categorized data**
+Group the data into different categories based on certain conditions
+
+```SQL
+Task: Generate a report showing the total sales for each category:
+- High if the sales higher than 50
+- Medium if the sales between 20 and 50
+- Low is the sales is equal or lower than 20
+Sort the result from lowest to highest
+
+SELECT Category, SUM(Sales) AS TotalSale FROM(
+SELECT orderid, sales,
+CASE
+	WHEN sales > 50 THEN 'High'
+	WHEN sales > 20 THEN 'Medium'
+ELSE 'Low'
+END Category FROM sales.orders)
+GROUP BY Category ORDER BY TotalSale DESC
+```
+
+Rule to follow:
+The data type of the results must be matching in the THEN
+
+**#2 Mapping Values**
+
+Transform the values from one form to another  in order to make it more readable in order to ptimize the database
+
+```SQL
+Retrieve employee details with gender displayed as full text
+SELECT employeeid, firstname, lastname, gender,
+CASE
+	WHEN gender = 'M' THEN 'Male'
+	WHEN gender = 'F' THEN 'Female'
+ELSE 'Not available'
+END as printedGender
+FROM sales.employees;
+
+```
+
+```SQL
+Retrieve emplyees name with abbrevation country
+SELECT customerid, firstname, lastname, country,
+CASE
+WHEN country = 'Germany' THEN 'DE'
+WHEN country = 'USA' THEN 'US'
+ELSE 'Not Available'
+END countryAbbreviated
+FROM sales.customers;
+```
+![[Screenshot 2025-07-02 at 9.43.45 AM.png]]
+
+**#3 Handling Nulls**
+Replace NULLs with a specific values
+Nulls can lead to inaccurate results, which can lead to wrong decision-making
+
+Task:
+```SQL
+Find the average score of customers and treat Nulls as 0 and additionally provide details such CustomerID & LastName
+
+SELECT customerid, firstname, score,
+CASE
+	WHEN score ISNULL THEN 0
+	ELSE score
+END scoreClean,
+AVG(
+CASE
+	WHEN score ISNULL THEN 0
+	ELSE score
+END) OVER() AvgCustomerClean,
+AVG(score) OVER() AvgCustomer
+FROM sales.customers;
+
+
+```
+
+**#4 Conditional Aggregation**
+Apply aggregate functions only on subsets of data that fulfill certain conditions.
+
+Task:
+```SQL
+Count how many times each customer has made an order with sales greater than 30
+
+```
+![[Screenshot 2025-07-02 at 1.52.47 PM.png]]
+
+
+#### CHAPTER 8 AGGREGATE FUNCTIONS
+
+Task1: Find the total number of orders
+Task2: Find the total sales of all orders, the avg, min, max
+```SQl
+SELECT
+COUNT(*) AS TotalOrder,
+AVG(sales) AS avgSales,
+SUM(sales) AS TotalSales,
+MIN(sales) AS Minsale,
+MAX(sales) AS maxSale
+FROM orders
+
+```
+
+
+#### WINDOW BASICS
+Perform calculation (e.g aggregation) on a specific subset of data, without losing the level of details of rows.
+
+**Difference between GROUP BY and WINDOW**
+![[Screenshot 2025-07-02 at 2.20.05 PM.png]]
+![[Screenshot 2025-07-02 at 2.21.14 PM.png]]
+![[Screenshot 2025-07-02 at 2.22.21 PM.png]]
+
+Use cases:
+	GROUP BY
+		Simple aggregation
+	WINDOW
+		Aggregations + keep details
+
+
+Tasks:
+1)Find the total sales among all the orders
+2)Find the total sales for each product
+3)Find the total sales for each product, additionally provide detail such as order id & order date
+```SQL
+1)SELECT SUM(sales) TotalSales FROM sales.orders;
+
+2)SELECT productID, SUM(sales) FROM sales.orders GROUP BY productID;
+
+2) SELECT orderid, orderdate,productid, SUM(sales) OVER(PARTITION BY productID) TotalSalesbyProduct FROM sales.orders;
+
+```
+
+Group by limits: Can't do aggregation and provide details at the same time.
+
+
+#### WINDOW FUNCTION SYNTAX
+![[Screenshot 2025-07-03 at 9.38.29 AM.png]]
+Example:
+```SQL
+AVG(SALES) OVER(PARTITION BY CATEGORY ORDER BY orderdate ROW UNBOUNDED PRECIDING);
+```
+
+Window Functions Type:
+![[Screenshot 2025-07-03 at 9.42.16 AM.png]]![[Screenshot 2025-07-03 at 9.44.30 AM.png]]
+ **OVER()**
+The Clause Tells sql that the function used is a window function.  it difines a windows or a subset of data.
+
+
+**PARTITION BY:**
+Divides the result set into partitions(windows) ![[Screenshot 2025-07-03 at 9.49.06 AM.png]]![[Screenshot 2025-07-03 at 9.50.52 AM.png]]
+
+Task:
+1) Find the total sales across all order additionally provide details such as order id and order date
+2) Find the total sales across each product, additionally provide details such as orderid and orderdate
+3) Find the total sales across all order, and the total sales across each product, additionally provide details such as orderid and orderdate
+4) Find the total sales for each combination of product and orderstatus
+```SQL
+1) SELECT orderid, orderdate, sum(sales) OVER() FROM sales.orders;
+
+2) SELECT orderid, orderdate,productid, SUM(sales) OVER(PARTITION BY productid ORDER BY orderid) FROM sales.orders ;
+
+3) SELECT orderid, orderdate, productid, SUM(sales) OVER() AS overallSale, SUM(sales) OVER(PARTITION BY productid)AS salesByproduct FROM sales.orders ORDER BY orderid;
+
+```
+![[Screenshot 2025-07-03 at 10.10.05 AM.png]]
+
+**ORDER BY**
+Sort the data within a window (Ascending | Descending)![[Screenshot 2025-07-03 at 10.10.28 AM.png]]
+
+```SQL
+SELECT
+	orderid,
+	orderdate,
+	sales,
+	RANK() OVER(ORDER BY Sales DESC) Ranksale
+FROM sales.orders;
+```
+
+
+WINDOW FRAME
+```SQL
+ROWS UNBOUNDED PRECEDING
+```
+Defines a subset of rows within each window that is relevant for the calculation.
+![[Screenshot 2025-07-03 at 10.41.48 AM.png]]
+
+```SQL
+AVG(Sales) OVER (PARTITION BY category ORDER BY orderdate ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING)
+```
+![[Screenshot 2025-07-03 at 10.43.50 AM.png]]![[Screenshot 2025-07-03 at 10.46.11 AM.png]]![[Screenshot 2025-07-03 at 10.46.35 AM.png]]![[Screenshot 2025-07-03 at 10.47.01 AM.png]]![[Screenshot 2025-07-03 at 10.47.18 AM.png]]![[Screenshot 2025-07-03 at 10.47.33 AM.png]]
+
+```SQL
+SUM(sales) OVER(ORDER BY Month ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING)
+```
+
+**UNBOUNDED FOLLOWING** is always going to be the last row, the last possible row within a window ![[Screenshot 2025-07-03 at 10.51.19 AM.png]]
+
+```SQL
+SUM (sales)
+OVER (ORDER BY month ROWS BETWEEN 1 PRECEDING AND CURRENT ROW)
+```
+![[Screenshot 2025-07-03 at 10.52.45 AM.png]]
+
+**UNBOUNDED PRECEDING**
+The first possible row within a window ![[Screenshot 2025-07-03 at 10.54.09 AM.png]]![[Screenshot 2025-07-03 at 10.54.32 AM.png]]
+```SQL
+SUM(sales) OVER (ORDER BY month ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING)
+```
+![[Screenshot 2025-07-03 at 10.55.46 AM.png]]
+
+**COMPACT FRAME**
+For only PRECEDING  the CURRENT ROW CAN BE SKIPPED
+**normal form:**
+	- `ROWS BETWEEN CURRENT ROW AND 2 FOLLOWING`
+```SQL
+SELECT orderid, orderdate, orderstatus, sales, SUM(sales) OVER (PARTITION BY orderstatus ORDER BY orderdate ROWS BETWEEN 2 PRECEDING  AND CURRENT ROW) FROM sales.orders;
+```
+**compact form:**
+	- `ROWS 2 FOLLOWING`
+
+``` SQL
+SELECT orderid, orderdate, orderstatus, sales, SUM(sales) OVER (PARTITION BY orderstatus ORDER BY orderdate ROWS 2 PRECEDING) FROM sales.orders;
+```
+
+Default frame is
+`ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW`
+
+
+
+**LIMITATION OF THE WINDOW FUNCTIONS:**
+#1RULE
+- Window functions can be used only in `SELECT`and `ORDER BY` clauses.
+- Window functions **cannot be used to filter data**
+#2RULE
+- Nesting Window functions is not allowed!
+#3RULE
+- SQL execute WINDOW functions after `WHERE` clause.
+
+SQL TASK:
+Find the total sales for each order status, only for two products 101 and 102
+```SQL
+SELECT
+orderid,
+orderdate,
+orderstatus,
+productid,
+sales,
+SUM(sales) OVER (PARTITION BY orderstatus) totalSales
+FROM sales.orders
+WHERE productid IN(101,102)
+
+```
+
+
+#4RULE
+- Window function can be used together with `GROUP BY` in the same query, ONLY if the same columns are used
+SQL task:
+- Rank customers based on their total sales.
+```SQL
+SELECT customerid, SUM(sales) AS totalSale, RANK() OVER(ORDER BY SUM(Sales) DESC) RankCustomers  FROM sales.orders GROUP BY customerid;
+
+```
+![[Screenshot 2025-07-03 at 11.33.07 AM.png]]
+
+
+**WINDOW AGGREGATE FUNCTIONS:**
+![[Screenshot 2025-07-03 at 11.55.13 AM.png]]
+
+#### **COUNT(*):**
+- Returns the number of rows within a window
+- In same scenario we don't want to count null values and we can achieve that by selecting column
+- It allows any data type
+- Overall Analysis quick summary or snapshot of the entire dataset
+```SQL
+1)Find the total number of orders, Additionally provide details such order id, order date.
+2) Find the total number of orders for each customers
+
+1)SELECT
+	orderid,
+	orderdate,
+	COUNT(*) OVER() totalOrders
+FROM sales.orders;
+2)
+SELECT
+	orderid,
+	orderdate,
+	COUNT(*) OVER() Totalorders,
+	COUNT(*) OVER(PARTITION BY customerid) ordersbycustomers
+	FROM sales.orders
+```
+![[Screenshot 2025-07-03 at 11.59.12 AM.png]]
+
+Data Quality Issue
+Duplicates leads to inaccuracies in analysis
+Count() can be used to identify duplicates
+
+Tasks:
+Check whether the table 'Orders' contains any duplicate rows
+Checking if the primary key is correct:
+```SQL
+SELECT
+	orderid,
+	COUNT(*) OVER( PARTITION BY orderid) CheckPK
+FROM sales.orders;
+
+Each primary key should reports 1 if there is a 2 it contains duplicate
+
+
+SELECT * FROM
+( SELECT
+	orderid,
+	COUNT(*) OVER(PARTITION BY orderid) CHECKPK
+FROM sales.ordersarchive)
+	WHERE CHECKPK > 1;
+```
+
+
+COUNT | Use cases
+
+#1 Overall Analysis
+#2 Category Analysis
+#3 Quality Checks: Identify NULLS
+#4 Quality Checks: Identify Duplicates
+
+
+#### **SUM()**
+Returns the sum all of values in each window  it only accepts numbers
+Task: Find the total sales across al orders and the total sales for each prodcut. Additionally porivde details such as order id and order date
+
+ ```SQL
+ SELECT
+	 orderid,
+	 productid,
+	 orderdate,
+	 sales,
+	 SUM(sales) OVER() AS tot_sum,
+	 SUM(sales) OVER(PARTITION BY productid) as TotbyProduct
+	 FROM sales.orders;
+```
+
+Comparison Uses cases
+Compare the current value and aggregated value of windows functions
+
+
+Task: Find the %percentage contribution of each prodcut's sales to the total sales
+```SQL
+ SELECT
+	orderid,
+	productid,
+	sales,
+	SUM(sales) OVER() AS total_sales,
+		ROUND(
+		(sales::numeric  / SUM(sales)
+		OVER()::numeric)
+		*100, 2) As percentageContri
+FROM sales.orders;
+```
+
+
+#### AVG()
+Returns the average of values within a window
+
+Find the average slaes across all orders and the average sales for each prodcut. Additionally provide details such as orderid and order date.
+```SQL
+SELECT
+orderid,
+orderdate,
+sales, productid, ROUND(AVG(sales) OVER(),2)  as TotAvg,
+ROUND(AVG(sales) OVER(PARTITION BY productid),2)  AS Avgbyproduct
+FROM sales.orders;
+```
+
+DEALING WITH NULL WHEN FINDING THE AVG()
+find the average scores of customers. Additional provide details such as CustomerID and lastName
+```
+SQL
+
+SELECT
+customerid,
+lastname,
+score,
+ROUND(AVG(score) OVER(),2) AS AvgNotconsideringNUlls,
+ROUND(AVG(COALESCE(score,0)) OVER(), 2) as AvgConsideringNUlls
+FROM sales.customers;
+```
+
+-- Find all the orders where sales are higher than the average sales across all orders;
+
+```SQL
+-- Find all the orders where sales are higher than the average sales across all orders;
+-- REMEMBER where cannot be used with windows functions! we have to use subquery instead
+SELECT *
+FROM(
+	SELECT
+		orderid,
+		productid,
+		sales,
+		AVG(sales) OVER() AvgSales
+	FROM sales.orders)
+WHERE sales > AvgSales;
+```
+
+#### MIN AND MAX AGGREGATE WINDOWS FUNCTION
+Min() returns the lowest value within a window,
+Max() returns the highest value within a window
+
+
+Find the highest & lowest sales across all roders and the highest & lowest sales for each prodcut additionally provide details such as order id and order date
+``` SQL
+SELECT
+	productid,
+	orderid,
+	orderdate,
+	sales,
+	MIN(sales) OVER(),
+	MIN(sales) OVER(PARTITION BY productid) as Minbyproduct ,
+	MAX(sales) OVER(),
+	MAX(sales) OVER (PARTITION BY productid) as Maxbyproduct
+FROM sales.orders;
+```
+
+Show the employees who have the highest salaries
+```SQL
+SELECT * FROM (
+SELECT
+	employeeid,
+	firstname,
+	lastname,
+	department,
+	salary,
+	MAX(salary) OVER() Highestsalary
+FROM sales.employees
+) WHERE salary = Highestsalary;
+```
+
+Find the deviation of each sales from the minimum and maximum sales.
+```SQL
+SELECT
+ 	orderid,
+ 	orderdate,
+ 	productid,
+ 	sales,
+ 	MAX(sales) OVER() HighestSales,
+ 	MIN(sales) OVER() lowestsales,
+ 	sales - MIN(sales) OVER() DeviationFromMin,
+ 	MAX(sales) OVER() - sales DeviationFromMax
+FROM sales.orders;
+```
+
+
+
+#### RUNNING & ROLLING TOTAL
+Tracking:
+- Tracking current sales with target sales
+Trend Analysis:
+- Providing insights into hisotrical patterns
+
+They aggregate sequence of members, and the aggregation is updated each time a new member is added
+
+RUNNING TOTAL:
+- Aggregate all values form the beginning up to the current point without dropping off older data
+- GREAT FOR BUDGETING
+
+```SQL
+SUM(sales) OVER (order by Month) NO NEED TO SPECIFY
+DEFAULT = ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+```
+
+ROLLING TOTAL:
+- Aggregate all values within a fixed time windows(e.g. 30 days   )
+- As new data is added, the odlest data point will be dropped.
+```SQL
+SUM(sales) OVER(ORDER BY MONTH
+ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)
+```
+
+![[Screenshot 2025-07-15 at 12.05.44 PM.png]]
+
+
+Task: Calculate the moving average of sales for each product over time.
+```SQL
+-- Calculate moving average of sales for each product over time.
+SELECT
+	orderid,
+	productid,
+	orderdate,
+	sales,
+	AVG(sales) OVER(PARTITION BY productid) AS AvgProdcut,
+	AVG(sales) OVER(PARTITION BY productid ORDER BY orderdate ) AS movingAvg
+FROM sales.orders;
+```
+
+Task: Calculate the moving average of sales for each prodcut over time, including only the next order.
+```SQL
+-- Calculate moving average of sles for each prodcut over time, including only the next order.
+SELECT
+	orderid,
+	productid,
+	orderdate,
+	sales,
+	AVG(sales) OVER(PARTITION BY productid) AS AvgBYProduct,
+	AVG(sales) OVER(PARTITION BY productid ORDER BY orderdate
+	ROWS BETWEEN CURRENT ROW AND 1 FOLLOWING) As AvgwithNext
+FROM sales.orders;
+```
+![[Screenshot 2025-07-15 at 1.08.03 PM.png]]![[Screenshot 2025-07-15 at 1.10.10 PM.png]]
+
+
+#### WINDOW RANKING FUNCTIONS:
+![[Screenshot 2025-07-15 at 2.34.59 PM.png]]
+![[Screenshot 2025-07-15 at 2.36.03 PM.png]]![[Screenshot 2025-07-15 at 2.36.45 PM.png]]![[Screenshot 2025-07-15 at 2.37.39 PM.png]]
+
+
+##### ROW NUMBER()
+- Assign a unique number to each row.
+- It doesn't handle ties
+
+```SQL
+ROW_NUMBER() OVER(ORDER BY sales DESC)
+```
+
+| Sales | Rank |
+| ----- | ---- |
+| 80    |      |
+| 20    |      |
+| 80    |      |
+| 50    |      |
+| 100   |      |
+
+| Sales | Rank |
+| ----- | ---- |
+| 100   | 1    |
+| 80    | 2    |
+| 80    | 3    |
+| 50    | 4    |
+| 20    | 5    |
+It doesn't handle ties!  ROW_NUMBER() ASSIGN UNIQUE RANK TO EACH OF ROW
+```SQL
+-- RANK THE ORDERS BASED ON THEIR SALES FROM HIGHEST TO LOWEST
+SELECT
+orderid,
+productid,
+sales,
+ROW_NUMBER() OVER(ORDER BY sales DESC)
+FROM sales.orders;
+```
+
+##### RANK()
+- Assign a rank to each row.
+- It handles ties.
+- It leaves gaps in ranking
+
+| Sales | Rank |
+| ----- | ---- |
+| 100   | 1    |
+| 80    | 2    |
+| 80    | 2    |
+| 50    | 4    |
+| 20    | 5    |
+```SQL
+-- RANK THE ORDERS BASED ON THEIR SALES FROM HIGHEST TO LOWEST
+SELECT
+orderid,
+productid,
+sales,
+RANK() OVER(ORDER BY sales DESC)
+FROM sales.orders;
+```
+
+##### DENSE_RANK()
+- Assign a rank to each row
+- It handles ties
+- It doesn't leaves gaps in ranking
+
+| Sales | Rank |
+| ----- | ---- |
+| 100   | 1    |
+| 80    | 2    |
+| 80    | 2    |
+| 50    | 3    |
+| 20    | 4    |
+```SQL
+-- RANK THE ORDERS BASED ON THEIR SALES FROM HIGHEST TO LOWEST
+SELECT
+orderid,
+productid,
+sales,
+DENSE_RANK() OVER(ORDER BY sales DESC)
+FROM sales.orders;
+```
+
+![[Screenshot 2025-07-15 at 2.52.38 PM.png]]
+
+Tasks: Find the top highest sales for each products:
+Use Case:
+-TOP-N Analysis, the top performers to do targeted marketing
+```SQL
+--Find the top highest sales for each products:
+SELECT * FROM(
+SELECT
+orderid,
+productid,
+sales,
+ROW_NUMBER() OVER(PARTITION BY productid ORDER BY sales DESC)  Rankbyproduct
+FROM sales.orders )
+WHERE Rankbyproduct = 1;
+```
+
+Use cases:
+- BOTTOM-N Analysis
+-Find the lowest 2 customers based on their total sales
+```SQL
+--Find the 2 lowest customers based on their total sales
+SELECT * FROM(
+SELECT
+	customerid,
+	SUM(sales) TotalSales,
+	ROW_NUMBER() OVER(ORDER BY SUM(sales)) rankCustomers
+FROM sales.orders
+GROUP BY Customerid
+) WHERE rankCustomers <= 2;
+```
+
+Task: Assign unique IDs to the rows of the 'orders Archieve Table'
+Assign Unique IDs
+	Help to assign unique identifier for each row to help paginating.
+	 Paginating: The process of breaking down a large data into smaller, more manageable chunks of data.
+```SQL
+SELECT
+ROW_NUMBER() OVER(ORDER BY orderid, orderdate) UniqueID,
+* FROM Sales.OrdersArchive;
+```
+
+
+Tasks: Identify duplicate rows in the tables "orders Archive" and return a clean result without any duplicate
+
+If the rank exceeds 1, it indicates that the primary key is not unique
+```SQL
+--Find the 2 lowest customers based on their total sales
+SELECT * FROM (
+SELECT
+ROW_NUMBER() OVER(PARTITION BY OrderID ORDER BY CreationTime DESC) Rn,
+* FROM sales.ordersarchive) WHERE Rn = 1
+```
+
+
+
+#### NTILE()
+Divides the rows into a specified number of approximately equal groups (Buckets)
+
+```SQL
+NTILE(2) OVER (ORDER BY Sales DESC)
+```
+
+Bucket Size = Number of Rows / Number of Buckets.
+Larger groups come first
+
+| Sales | NTILE |
+| ----- | ----- |
+| 100   | 1     |
+| 80    | 1     |
+| 80    | 2     |
+| 50    | 2     |
+
+| Sales | NTILE |
+| ----- | ----- |
+| 100   | 1     |
+| 80    | 1     |
+| 80    | 1     |
+| 50    | 2     |
+| 30    | 2     |
+
+```SQL
+SELECT
+	orderid,
+	sales,
+	NTILE(4) OVER(ORDER BY sales DESC) FourBucket,
+	NTILE(3) OVER(ORDER BY sales DESC) ThreeBucket,
+	NTILE(2) OVER(ORDER BY sales DESC) TwoBucket,
+	NTILE(1) OVER(ORDER BY sales DESC) OneBucket
+FROM sales.orders;
+```
+
+Use Cases NTILE:
+- Data Analyst
+	- Data Segmentation
+		- Divides a dataset into distinct subsets based on certain criteria
+	Tasks:
+	Segment all orders into 3 categories high, medium and low sales
+```SQL:
+SELECT *,
+CASE
+	WHEN Buckets = 1 THEN 'High'
+	WHEN Buckets = 2 THEN 'Medium'
+	WHEN Buckets = 3 THEN 'Low'
+END SalesSEgm
+FROM(
+SELECT
+	orderid,
+	sales,
+	NTILE(3) OVER(ORDER BY sales DESC) Buckets
+FROM sales.orders
+)
+```
+- Data Engineer
+	- ETL processing
+	- Equal load processing ![[Screenshot 2025-07-15 at 4.39.02 PM.png]]
+	- Task: In order to export the data, divide the orders into 2 groups
+```sql
+SELECT
+NTILE(2) OVER (ORDER BY orderid)Bucket,
+*
+FROM sales.orders;
+```
+
+
+#### PERCENTAGE BASED RANKING:
+
+Two different formulas:
+- **CUME_DIST** = POSITION NR/ NUMBER OF ROWS
+- **PERCENT_RANK** = POSITION NR -1 / NUMBER OF ROWS -1
+
+
+**CUME_DIST:**
+Cumulative distribution calculates the distribution of data points within a windows
+
+![[Screenshot 2025-07-15 at 4.47.57 PM.png]]
+
+**CUME_DIST TIE Rule:**
+The position of the last occurrence of the same value for example
+in the second row where the value = 80
+	that 0.6 = Position Nr(3)/ Number of rows(5) = 0.6 not 2 because we take the last occurence
+
+
+**PERCENT_RANK()**
+Calculates the relative position of each row
+TIE RULE:
+The position of the first uccurence of the same value:
+Percent_Rank= 2-1/ 5-1 = 0.25
+
+Difference between CUME_DIST and PERCENT_RANK
+CUME_DIT is Inclusive The current row is included
+PERCENT_RANK exclusive The current row is excluded
+
+Task: Find the prodcuts that fall within the highest 40% of prices
+```SQL
+
+SELECT * FROM(
+SELECT
+	product,
+	price,
+	CUME_DIST() OVER(ORDER BY price DESC) AS Cumulative_price,
+	PERCENT_RANK() OVER(ORDER BY price DESC) AS Percent_price
+FROM sales.products)
+WHERE Cumulative_price <= .4
+```
+
+
+#### VALUE FUNCTIONS ####
+![[Screenshot 2025-07-16 at 5.10.28 PM.png]]
+
+
+##### **LEAD()**
+**Access a value from the next row within a window**
+```SQL
+LEAD(Sales, 2, 10) OVER(PARTITION BY ProductID ORDER BY OrderDate)
+```
+![[Screenshot 2025-07-16 at 5.15.21 PM.png]]
+
+##### **LAG()**
+**Access a value from the previous row within a window.** ![[Screenshot 2025-07-16 at 5.20.35 PM.png]]![[Screenshot 2025-07-16 at 5.22.35 PM.png]]
+
+Task: Analyize the month-over-month(MoM) Perfromance by finding the percentange change in sales between the current and previous month
+```SQL
+SELECT
+*,
+currentMonthSales - PreviousMonthSales As Mom_Change,
+CAST((currentMonthSales - PreviousMonthSales) AS FLOAT)/ PreviousMonthSales * 100 As PercentChange
+FROM(
+SELECT
+	EXTRACT(MONTH FROM orderdate) AS ordermonth,
+	SUM(Sales) AS currentMonthSales,
+	LAG(SUM(sales)) OVER(ORDER BY EXTRACT(MONTH FROM orderdate)) AS PreviousMonthSales
+FROM sales.orders
+GROUP by EXTRACT(MONTH FROM orderdate))
+
+```
+
+**Use Cases:**
+**Time series analysis**
+The process of analyzing the data to understand patterns, trends and behaviors over time.
+	**Year over years(YoY)**
+		Analyize the overall growth or decline of the business's performance over time
+	**Month-over-mOnth(Mom)**
+		Analyze short term trends and discover patterns in seasonality
+Customer Retention Analysis
+	Measure customer's behavior and loyalty to help business build strong relationships with customers.
+
+Task: Analyze customer loyalty by ranking customers based on the average number of days between orders.
+
+```SQL
+SELECT
+	customerid,
+	AVG(difference) AvgDifference,
+	RANK() OVER(ORDER BY AVG(Difference)) RankAvg
+FROM(
+SELECT
+	orderid,
+	customerid,
+	orderdate,
+	LEAD(orderdate) OVER(PARTITION BY customerid ORDER BY orderdate) NextOrder,
+	LEAD(orderdate) OVER(PARTITION BY customerid ORDER BY orderdate) - ORDERDATE as Difference
+FROM sales.orders
+ORDER BY customerid, orderdate)
+GROUP BY customerid;
+```
+
+##### FIRST_VALUE()
+access a value from the first row within a window
+
+##### LAST_VALUE()
+Access a value from the last row within a window![[Screenshot 2025-07-17 at 10.33.55 AM.png]]
+Last value is the only functions where you need to specify the window range because as you can see in the example it does not make sense using it with the default window size
+![[Screenshot 2025-07-17 at 10.36.00 AM.png]]
+
+
+```SQL
+--Task:
+--Find the lowest and highest sales for each product
+-- Find the difference in sales between the curernt and the lowest sales
+SELECT
+	orderid,
+	productid,
+	sales,
+	FIRST_VALUE(sales) OVER(PARTITION BY productid ORDER BY sales) AS firstValue,
+	FIRST_VALUE(sales) OVER(PARTITION BY productid ORDER BY sales DESC) AS lastValueUsingFirst,
+	LAST_VALUE(sales) OVER(PARTITION BY productid ORDER BY sales ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING) As lastValue
+FROM sales.orders
+```
+
+![[Screenshot 2025-07-17 at 11.46.36 AM.png]]
+
+
+#### ADVANCED SQL TECHNIQUES
+
+**DATA WAREHOUSE**
+A Special database that collects and integrates data from different sources to enable analytics and support decision-making
+![[Screenshot 2025-07-17 at 11.58.20 AM.png]]
+
+
+#### DATABASE ARCHITECTURE
+![[Screenshot 2025-07-17 at 12.09.02 PM.png]]
+
+**DATABASE ENGINE**
+It is the brain of the database, executing multiple operations such as storing, retrieving, and managing data within the database.
+
+Two Type of Storage:
+- **Disk Storage**
+	- Long-term memory where data is stored permanently
+	- Capacity can hold a large amount of data
+	- Speed slow to read and to write
+	Three type of Storage area:
+	**1- User Data Storage**
+		It is the main content of the database
+		This is where the actual data that users care about is stored.
+		It holds the **metadata** informations about the database
+		**Metadata** which is Data about Data !
+	**2- System Catalog**
+		Database internal storage for its own information. A blueprint that keeps track of everything about the database itself, not the user data.
+		![[Screenshot 2025-07-17 at 12.39.12 PM.png]]
+		**Information schema** A system defined schema with built in views that provide info about the database, like tables and columns.
+		SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+	**3- Temp data**
+		Temporary space used by the database for short-term tasks, like processing queries or sorting data.  Once these tasks are done, the storage is cleared.
+- **Cache**
+	-  Fast short-term memory, where data is stored temporarily
+	- Speed: extremely fast to read and to write
+	- Capacity: can hold smaller amount of data
+
+
+#### SUBQUERY
+it is a query inside another query
+
+**Why do we need them?**
+![[Screenshot 2025-07-17 at 3.51.42 PM.png]]
+
+Mainly Two types of Subqueries:
+- **Non-correlated subquery** (independent from the main query )
+- **Correlated subqueries** (dependent form the main query )
+
+##### RESULT TYPE SUBQUERIES :
+- Scalar subquery (single values)
+- Row subquery (multiple rows)
+- Tables subquery (multiple rows and columns )
+![[Screenshot 2025-07-17 at 3.54.45 PM.png]]
+
+
+**RESULT TYPES SUBQUERIES**
+```SQL
+SELECT AVG(Sales) FROM Sales.orders;
+
+--the value we receive is a scalar query so one single value.
+```
+![[Screenshot 2025-07-17 at 3.57.59 PM.png]]
+
+
+##### HOW TO USE SUBQUERY IN DIFFERENT LOCATION (SELECT, FROM, JOIN, WHERE)
+**FROM**
+Used as a temporary table for the main query
+
+```SQL
+-- Syntax:
+SELECT column1,column2
+FROM (
+	SELECT column
+	FROM table1
+	WHERE condition
+	) As alias
+
+
+```
+
+```SQL
+-- Find the products that have a price higher than the average price of all products
+
+--Main query
+SELECT *
+FROM(
+--Subquery
+	SELECT
+	productid,
+	product,
+	price,
+	AVG(price) OVER() AvgPrice
+	FROM sales.products
+) WHERE price > AvgPrice;
+
+
+-- Rank customer based on their total amount of sales
+
+SELECT *,
+RANK() OVER(ORDER BY totalSales DESC) CustomerBank
+FROM(
+	SELECT
+		customerid,
+		SUM(sales) AS totalSales
+	FROM sales.orders
+	GROUP BY customerid
+	)
+
+```
+
+
+**SELECT**
+Used to aggregate data side by side with the main query's data, allowing for direct comparison
+
+Syntax:
+```SQL
+SELECT
+	Column1,
+	(SELECT column FROM table1 WHERE condition) AS alias
+FROM table1
+```
+
+Rule: The result of the SELECT subquery must be scalar so a single value output.
+```SQL
+--Task: Show the productIDs, product name, prices, and the total number of orders
+SELECT
+	productid,
+	product,
+	price,
+	(SELECT COUNT(*) FROM sales.orders) As TotalOrders
+FROM sales.products;
+
+```
+
+
+**JOIN**
+Used to prepare the data (filtering or aggregation) before joining it with other tables.
+```SQL
+-- Show all customer details and find the total orders for each customer
+SELECT c.*, o.Totalorders FROM sales.customers c
+LEFT JOIN (
+SELECT
+	customerid,
+	COUNT(*) Totalorders
+	FROM sales.orders
+	GROUP BY customerid) o
+ON c.customerid = o.customerid
+```
+
+
+**WHERE**
+Used for complex filtering logic and makes query more flexible and dynamic.
+
+We can use two different operators:
+- **Comparison operators**
+	Used to filter data by comparing two values
+
+| Operator | Mean                  | Syntax                                            |
+| -------- | --------------------- | ------------------------------------------------- |
+| **=**        | Equal                 | ` WHERE Sales = (SELECT AVG(Sales) FROM orders) ` |
+| **!= , <>**  | Not Equal             | `WHERE Sales != (SELECT AVG(Sales) FROM orders)`  |
+| **>**        | Greater than          | `WHERE Sales > (SELECT AVG(Sales) FROM orders)`   |
+| **<**        | Less Than             | `WHERE Sales < (SELECT AVG(Sales) FROM orders)`   |
+| **>=**       | Greater or equal to   | `WHERE Sales >= (SELECT AVG(Sales) FROM orders)`  |
+| **<=**       | Less than or equal to | `WHERE Sales <= (SELECT AVG(Sales) FROM orders)`  |
+Syntax:
+```SQL
+SELECT column1, column2
+FROM table1
+WHERE column = (SELECT column FROM table2 WHERE condition )
+
+-- RULE: Only scalar subqueries are allowed to be used.
+```
+
+Task:
+```SQL
+-- Find the prodcuts that have a price higher than the average price of all products
+SELECT
+	productid,
+	price
+FROM sales.products
+WHERE price > (SELECT ROUND(AVG(price),2) FROM sales.products)
+```
+
+- **Logical Operators**
+Syntax:
+```SQL
+SELECT column1, column2
+FROM table1
+WHERE column IN (SELECT column FROM table2 WHERE condition)
+
+-- RULE: subqueries allows
+```
+
+| Logical    | Explanation                                                | Syntax                              |
+| ---------- | ---------------------------------------------------------- | ----------------------------------- |
+| **IN**         | Check if a value matches any value in a list               | `WHERE Sales IN(SELECT ..)`         |
+| **NOT IN**     | Checks if a value does not matches any value in a list Pra | `WHERE Sales NOT IN(SELECT ..)`     |
+| **EXISTS**     | Checks if subquery returns any rows                        | `WHERE Sales EXISTS(SELECT ..)`     |
+| **NOT EXISTS** | Checks if subquery returns no rows                         | `WHERE Sales NOT EXISTS(SELECT ..)` |
+| **ANY**        | Returns True if a value matches any value in a list        | `WHERE Sales < ANY (SELECT ..)`     |
+| **ALL**        | Returns True if a value matches all values in a list.      | `WHERE Sales > ALL (SELECT ..)`     |
+Task:
+```SQL
+-- Show the details of orders made by customers in Germany
+SELECT
+	*
+FROM sales.orders
+	WHERE customerid IN (SELECT customerid FROM sales.customers WHERE country = 'Germany')
+-- Show the details of orders made by customers NOT in germany
+SELECT
+	*
+FROM sales.orders
+	WHERE customerid NOT IN
+	(SELECT customerid FROM sales.customers WHERE country = 'Germany')
+
+
+```
+
+Task:
+```SQL
+-- Find female employees whose salaries are greater than the salaries of any male employee
+
+SELECT
+	employeeid,
+	firstname,
+	gender,
+	salary FROM sales.employees
+WHERE gender = 'F'
+	AND Salary > ANY (SELECT salary FROM sales.employees WHERE gender = 'M');
+```
+
+
+##### DEPENDANCY SUBQUERIES
+- **Non-correlated subquery**
+	- A subquery that can run independently from the main query
+- **Correlated subquery**
+	- A subquery that relays on values from the main query
+	![[Screenshot 2025-07-18 at 1.13.12 PM.png]]
+Task:
+```SQL
+--Show all customer details and find the total orders for each customer
+SELECT *,
+	(SELECT COUNT(*) FROM sales.orders o
+	WHERE o.customerID = c.customerid) TotalSales
+FROM sales.customers c ;
+```
+![[Screenshot 2025-07-18 at 3.59.49 PM.png]]
+
+**EXISTS AND NOT EXISTS**
+Check if a subquery returns any rows
+Syntax:
+```SQL
+SELECT column1, column2
+FROM table2
+WHERE EXISTS(SELECT 1 FROM table1
+			WHERE table1.ID = table2.ID)
+```
+
+Tasks:
+```SQL
+-- Show the details of orders made by customers in Germany
+SELECT * FROM sales.orders o
+WHERE EXISTS
+	(SELECT 1
+	FROM sales.customers c
+	WHERE country = 'Germany' AND
+	o.customerid = c.customerid)
+```
+
+
+
+#### CTE COMMON TABLE EXPRESSION
+Temporary, named result set(virtual table), that can be used multiple times within your query to simplify and organize complex query.
+A big difference between subquery and CTE is that the virtual box created with the CTE can be used multiple times unlike the subquery where the result can only be used once!
+![[Screenshot 2025-07-21 at 11.02.40 AM.png]]
+
+**Why do we need CTE**
+![[Screenshot 2025-07-21 at 11.07.43 AM.png]]
+
+##### CTE:
+- **Readability**
+- **Modularity**
+- **Reusability**
+- **Cannot use ORDER BY directly within the CTE**
+- ![[Screenshot 2025-07-21 at 12.10.15 PM.png]]
+
+##### CTE Types:
+- Non-recursive CTE
+	Is executed only once without any repetition
+	- Standalone CTE
+	- Nested CTE
+- Recursive CTE
+	Self-referencing query that repeatedly processes data until a specific condition is met.
+
+
+
+**STANDALONE CTE**
+Defined and used independently. It runs independently as it's self-contained and doesn''t rely on other CTEs or queries
+![[Screenshot 2025-07-21 at 12.15.08 PM.png]]
+
+Syntax:
+```SQL
+-- SQL CTE definition:
+WITH CTE-Name AS
+	(
+		SELECT ...
+		FROM ...
+		WHERE ...
+	)
+
+-- SQL use: Main query
+SELECT ...
+FROM CTE-Name
+WHERE
+```
+
+Task:
+```SQL
+-- #1Step: Find the total sales per customer.
+WITH CTE_Total_Sales AS
+(
+	SELECT customerid, SUM(sales)as TotalSales
+	FROM sales.orders
+	GROUP by customerid
+)
+-- Main query
+SELECT
+	c.customerid,
+	c.firstname,
+	c.lastname,
+	cts.TotalSales
+FROM sales.customers c
+LEFT JOIN CTE_Total_Sales cts
+ON cts.customerid = c.customerid
+ORDER BY customerid
+```
+
+
+#### MULTIPLE Standalone CTEs
+![[Screenshot 2025-07-21 at 12.27.48 PM.png]]
+
+MULTIPLE STANDALONE CTS SYNTAX:
+
+```SQL
+WITH CTE-Name1 AS
+	(
+		SELECT ...
+		FROM ...
+		WHERE ...
+	),
+	CTE-NAME2 AS
+	(
+		SELECT ...
+		FROM ...
+		WHERE ...
+	)
+SELECT ...
+FROM CTE-Name1
+JOIN CTE-Name2
+WHERE ...
+```
+
+Task:
+```SQL
+-- Step1: Find the total sales per customer (standalone CTE)
+WITH CTE_Total_Sales AS
+(
+	SELECT customerid, SUM(sales)as TotalSales
+	FROM sales.orders
+	GROUP by customerid
+)
+-- Step2: Find the last order date for each customer (standalone CTE)
+,CTE_Last_Order As
+(
+	SELECT
+		customerid,
+		MAX(orderdate) As LastOrder
+	FROM sales.orders
+	GROUP by customerid
+)
+-- Main query
+SELECT
+	c.customerid,
+	c.firstname,
+	c.lastname,
+	cts.TotalSales,
+	clo.LastOrder
+FROM sales.customers c
+LEFT JOIN CTE_Total_Sales cts
+ON cts.customerid = c.customerid
+LEFT JOIN  CTE_Last_Order clo
+ON clo.customerid = c.customerid
+
+
+```
+
+
+
+##### NESTED CTE
+CTE Inside another CTE, A nested CTE uses the result of another CTE, so it can't run independenltly
+![[Screenshot 2025-07-22 at 10.48.10 AM.png]]![[Screenshot 2025-07-22 at 10.48.52 AM.png]]
+Task:
+```SQL
+-- Step1: Find the total sales per customer (Standalone CTE)
+WITH CTE_Total_Sales AS
+(
+	SELECT customerid, SUM(sales)as TotalSales
+	FROM sales.orders
+	GROUP by customerid
+)
+-- Step2: Find the Last order date for each customer(Standalone CTE)
+,CTE_Last_Order As
+(
+	SELECT
+		customerid,
+		MAX(orderdate) As LastOrder
+	FROM sales.orders
+	GROUP by customerid
+),
+-- Step3: Rank customer based on total sales per customer(Nested CTE)
+CTE_Customer_Rank As
+(
+	SELECT
+		customerid,
+		TotalSales,
+		RANK() OVER(ORDER BY TotalSales DESC) AS CustomerRank
+	FROM CTE_Total_sales
+)
+-- Step4: Segment customers based on their total Sales
+, CTE_customer_segment AS
+(
+	SELECT
+		customerid,
+		TotalSales,
+		CASE WHEN TotalSales > 100 THEN 'High'
+			 WHEN TotalSales > 89 THEN 'Medium'
+			 ELSE 'Low'
+		END CustomerSegment
+	FROM CTE_Total_Sales
+
+)
+-- Main query
+SELECT
+	c.customerid,
+	c.firstname,
+	c.lastname,
+	cts.TotalSales,
+	clo.LastOrder,
+	ccr.CustomerRank,
+	ccs.CustomerSegment
+FROM sales.customers c
+LEFT JOIN CTE_Total_Sales cts
+ON cts.customerid = c.customerid
+LEFT JOIN  CTE_Last_Order clo
+ON clo.customerid = c.customerid
+LEFT JOIN CTE_Customer_Rank ccr ON
+ccr.customerid = c.customerid
+LEFT JOIN CTE_customer_segment ccs ON
+ccs.customerid = cts.customerid
+
+```
+
+
+CTE Best Practice:
+- Don't use more than 5 CTEs in one query; otherwise, your code will be hard to understand and maintain.
+- Before creating a new CTE always try to consolidate, improve, merge two existing CTEs
+
+
+#### RECURSIVE CTE
+Self-referencing query that repeatedly processes data until a specific condition is met. ![[Screenshot 2025-07-22 at 11.27.48 AM.png]]![[Screenshot 2025-07-22 at 11.28.57 AM.png]]
+
+Task:
+```SQL
+-- Generate a sequence of number from 1 to 500
+-- Keep in mind by default max rec is 20
+
+WITH RECURSIVE Series AS
+(
+-- Anchor Query
+	SELECT 1 AS myNumber
+	UNION ALL
+-- RECURSIVE QUERY
+		SELECT
+		myNumber + 1
+		FROM Series
+		WHERE myNumber < 500
+)
+-- Main
+SELECT * FROM Series
+```
+
+Task:
+```SQL
+-- Show the employee hierarchy by displaying each employee's level within the organization
+WITH RECURSIVE CTE_Emp_H AS
+(
+-- Anchor query
+	SELECT
+		employeeid,
+		firstname,
+		managerid,
+		1 AS Level
+	FROM sales.employees
+	WHERE managerid IS NULL
+	UNION ALL
+	-- Recursive Query
+	SELECT
+		e.employeeid,
+		e.firstname,
+		e.managerid,
+		Level+1
+	FROM Sales.employees As e
+	INNER JOIN CTE_Emp_H ceh
+	ON e.managerid = ceh.employeeid
+)
+
+--Main Query
+SELECT * FROM CTE_Emp_H
+
+```
+![[Screenshot 2025-07-22 at 12.16.00 PM.png]]
+
+
+#### VIEWS DATABASE OBJECT
+![[Screenshot 2025-07-22 at 12.21.25 PM.png]]
+
+**Database Server:**
+Stores, manages, and provides access to databases for users or applications
+
+**Database:**
+Collection of information that are stored in a structural way
+
+**Schema:**
+Logical layer that groups related objects together.
+
+**Table:**
+a place where data is stored and organized into rows and columns
+
+**View**:
+is a virtual table that shows data without storing it physically
+
+**DDL Data Definition Language**
+A set of commands that allows us to define and manage the structure of a database
+
+#### 3 ABSTRACTION LEVEL OF A DATABASE
+![[Screenshot 2025-07-22 at 12.44.26 PM.png]]
+
+
+#### VIEW
+Virtual table based on the result set of a query, without storing the data in database.
+Views are persisted SQL queries in the database.
+![[Screenshot 2025-07-22 at 12.54.42 PM.png]]
+
+VIEWS vs TABLEs
+![[Screenshot 2025-07-22 at 12.55.23 PM.png]]
+
+Views Use Cases and Scenarios:
+ #1CentralQueryLogic
+	 - Store central, complex query logic in the database for access by multiple queries, reducing project complexity
+	![[Screenshot 2025-07-22 at 1.55.45 PM.png]]![[Screenshot 2025-07-22 at 1.55.54 PM.png]]
+
+VIEWS VS CTE
+![[Screenshot 2025-07-22 at 1.56.45 PM.png]]
+
+Syntax of Views:
+```SQL
+	CREATE VIEW VIEW-NAME AS -- DDL COMMAND
+	(
+		SELECT ...
+		FROM ...
+		WHERE ...
+	)
+
+CREATE VIEW Sales.V_Monthly_Summary AS -- Specify the schema otherwise dbo default
+(
+	SELECT
+		EXTRACT(MONTH FROM orderdate)  OrderMonth,
+	 	SUM(sales) TotalSales,
+		COUNT(orderid) TotalOrders,
+		SUM(quantity) TotalQuantities
+	 FROM sales.orders
+	 GROUP BY  EXTRACT(MONTH FROM orderdate)
+)
+
+-- Removing/ Delete the view
+DROP VIEW V_Monthly_Summary;
+
+-- ALTERING THE VIEW
+```
+
+#2HideComplexity
+Views can be use to hide the complexity of database tables and offers users more friendly and easy to consume objects.
+
+Task:
+```SQL
+-- Provide a view that combines details from orders, products, customers, and employees.
+CREATE VIEW Sales.V_order_details AS
+(
+SELECT
+	o.orderid,
+	o.orderdate,
+	p.product,
+	p.category,
+	COALESCE(c.firstName, ' ') || ' ' || COALESCE(c.lastName, ' ') As CustomerName,
+	c.Country As CustomerCountry,
+	COALESCE(e.firstName, ' ') || ' ' || COALESCE(e.lastName, ' ') As SalesName,
+	e.Department,
+	o.sales,
+	o.quantity
+FROM sales.orders o
+LEFT JOIN  sales.products p
+ON p.productid = o.productid
+LEFT JOIN  sales.customers c
+ON c.customerid = o.customerid
+LEFT JOIN sales.employees e
+ON e.employeeid = o.salespersonid
+)
+```
+
+
+#3DataSecurity
+Use views to enforce security and protect sensitive data, by hiding columns and / or rows from tables.
+
+
+![[Screenshot 2025-08-06 at 9.36.18 AM.png]]
+
+```SQL
+-- Provide a view for the EU sales Team that combines details from all tbales and excludes data related to the USA
+-- taking the current views V_order_details
+CREATE VIEW Sales.V_order_details_EU AS
+SELECT  * FROM Sales.V_order_details
+WHERE customer_country != 'USA';
+```
+
+#4FlexibilityAndDynamic
+![[Screenshot 2025-08-06 at 12.41.55 PM.png]]
+
+#5MultipleLanguages![[Screenshot 2025-08-06 at 12.44.01 PM.png]]
+#6VirtualDataMartsinDWH
+views can be used asData Marts in Data Warehouse System because they provide a flexible and efficient way to present. data. ![[Screenshot 2025-08-06 at 12.49.59 PM.png]]In order to build data marts is always better to use views because they are quicker, more dynamics
+
+![[Screenshot 2025-08-06 at 4.58.12 PM.png]]
+
+#### CTE & TEMP
+
+**DB Table:**
+A table is a structured collection of data, similar to a spreadsheet or gird(Excel)
+
+**Types of Tables:**
+- Permanent Tables Two ways to create them:
+	- Create/Select
+	- CTAS (Create table as select)
+
+CREATE/INSERT
+1. Create | Define the structure of the Table.
+2. Insert | Insert data into the table.
+
+
+CTAS:
+Create a new table based on the result of an SQL query
+![[Screenshot 2025-08-10 at 11.17.44 AM.png]]
+
+
+
+##### DIFFERENCE BETWEEN VIEWS AND CTAS
+ 1. In **Views** the query of view has not been yet executed (meaning that data are not already inside the view) While in **CTAS** the query has already been executed meaning when created we already have data inside the table ![[Screenshot 2025-08-10 at 11.20.49 AM.png]]
+ 2. Querying views is **SLOWER** than querying CTAS tables
+ 3. **CTAS** stores a one-time snapshot of the query results (doesn’t update if the source table changes), while a **View** stores only the query and always shows the latest data from the source table.
+
+
+###### SYNTAX OF CREATE/INSERT
+![[Screenshot 2025-08-10 at 11.27.30 AM.png]]
+
+
+###### SYNTAX OF CTAS
+![[Screenshot 2025-08-10 at 11.28.27 AM.png]]
+
+##### Use cases CTAS
+#OptimizedPerformance
+![[Screenshot 2025-08-10 at 11.50.09 AM.png]]
+
+
+#RefreshData
+Task: Refresh data daily in our CTAs
+```SQL
+DROP TABLE IF EXISTS Sales.MonthlyOrders;
+SELECT
+	TO_CHAR(orderdate,'Month') AS OrderMonth,
+	COUNT(orderid) TotalOrders
+INTO Sales.MonthlyOrders
+FROM sales.orders
+GROUP BY TO_CHAR(orderdate,'Month');
+```
+
+#CreateSnapshot at specifc time in order to find issues
+![[Screenshot 2025-08-10 at 12.04.15 PM.png]]
+
+#PhysicalDataMartsINDHW
+Persisting the Data Marts of A DWH improves the speed of data retrieval compared to using views. ![[Screenshot 2025-08-10 at 12.06.04 PM.png]]![[Screenshot 2025-08-10 at 12.06.13 PM.png]]
+##### TEMPORARY TABLES
+- Temporary tables (Delete  and drops once session ends)
+Stores intermediate results in temporary storage within the database during the session. The databse will drop all temporary tables once the session ends.
+![[Screenshot 2025-08-10 at 12.10.53 PM.png]]
+**Session:**
+The time between connecting to and disconnecting from the database.
+
+
+**SYNTAX AND EXAMPLES**
+![[Screenshot 2025-08-10 at 12.12.30 PM.png]]
+
+```SQL
+-- Create a temporary Table`
+SELECT *
+INTO TEMPORARY Orders
+FROM sales.orders;
+
+SELECT * FROM Orders;
+
+DELETE FROM Orders
+WHERE orderstatus = 'Delivered';
+
+-- Stored into the database so not temporary anymore
+SELECT *
+INTO Sales.OrderTest FROM Orders;
+```
+
+
+#### WHY USING TEMPORARY TABLES
+
+![[Screenshot 2025-08-20 at 10.29.20 AM.png]]
+
+### SUMMARY
+![[Screenshot 2025-08-20 at 10.38.40 AM.png]]
+
+
+
+
+
+### COMPARISON SUBQUERY VS CTE VS VIEW VS CTAS VS TEMP
+![[Screenshot 2025-08-20 at 10.42.24 AM.png]]
+
+
+Bara personal Favorite:
+1) Views
+2) CTE (Never more than 5)
+3) Subquery
+4) CTas if views are slow
+ 5) TMP
+
+---
+
+## STORED PROCEDURE
+
+Storing our sql statement on the database server side instead of client.
+
+**Before:**
+![[Screenshot 2025-08-20 at 1.50.14 PM.png]]
+
+**After stored procedure:**
+![[Screenshot 2025-08-20 at 1.50.28 PM.png]]
+
+
+
+##### STORED PROCEDURE VS QUERY
+![[Screenshot 2025-08-20 at 1.52.47 PM.png]]
+
+
+
+### STORED PROCEDURE VS PYTHON
+![[Screenshot 2025-08-20 at 1.54.22 PM.png]]
+
+##### STORED PROCEDURE SYNTAX
+
+```SQL
+CREATE PROCEDURE ProcedureName AS
+BEGIN
+	-- SQL statment go here
+END
+
+EXEC ProcedureName -- Execute procedure
+```
+
+
+### SQL INDEX
+Data Structure that provides a quick access to data, optimizing the speed of your queries.
+
+#### Index Types:
+
+Indexes:
+- **Structure** ( How the database is organizing and referencing the data)
+	- Clustered Index
+	- Non-Clustered Index
+- **Storage** ( How is the data stored physically in the database)
+	- Rowstore index
+	- Columnstore Index
+- **Functions**
+	- Unique index
+	- Filtered Index
+
+General Rule:
+	Some indexes are better for reading, others for writing performance.
+
+
+Databases are stored into a `Datafile.mdf` which are stored inside `blocks` called `Pages`
+
+**Page**:
+The smallest unit of data storage in a database (8kb), it stored anything inside( Data, Metadata, Indexes, etc)
+
+Types:
+- Data Page
+- Index Page
+
+
+Page Structure:
+
+Header, it contains keyinformations about metadata like pageid and following format 1:150
+Fixed size of 96 bytes
+
+Offset array quick index, for the row stored inside the page it keeps tracks where each row begins and it has fixed data
+![[Screenshot 2025-08-20 at 2.57.54 PM.png]]
+
+
+**HEAP**  table without clustered index , so a database that doesn't follow any particular order.
+Very quick in inserting data, but crazy slow in retrieving data.
+FAST READ, SLOW WRITE
+![[Screenshot 2025-08-20 at 3.06.44 PM.png]]
+
+**Table Full Scan**:
+Scans the entire table page by page and row by row searching for data.
+
+##### Clustered Index
+B-Tree (Balance Tree)
+Hierarchical structure storing data at leaves, to help quickly locate data.
+![[Screenshot 2025-08-20 at 3.10.32 PM.png]]
+
+
+Found in the intermediate Node :
+**Index Page**: It stores key values(pointers) to another page. it doesn't store the actual rows.
+![[Screenshot 2025-08-23 at 6.54.22 PM.png]]
+
+
+##### Non-Clustered Index
+
+A non clustered index won't reorganize or change anything on the data page.
+![[Screenshot 2025-08-23 at 7.16.35 PM.png]]![[Screenshot 2025-08-23 at 7.17.07 PM.png]]![[Screenshot 2025-08-23 at 7.18.34 PM.png]]![[Screenshot 2025-08-23 at 7.19.31 PM.png]]
+
+#### Clustered Index vs Non-Clustered Index
+
+Clustered index can be compared to the table of contents of books
+Non-clusterindex, index at the end of the books.
+![[Screenshot 2025-08-23 at 7.57.48 PM.png]]
+
+
+##### **Index Syntax**
+
+```SQL
+CREATE [CLUSTERED | NONCLUSTERED] INDEX index_name ON table_name (column1, column2, ...)
+-- Default is Non clustered
+
+CREATE CLUSTERED INDEX IX_Customers_ID  ON Customers (ID)
+
+CREATE NONCLUSTERED INDEX IX_Customers_City ON Customers (CITY)
+
+CREATE INDEX IX_Customers_Name ON Customers (LastName ASC, FirstName DESC)
+```
+
+
+A primary Key (PK) Automatically creates a clustered index by default.
+
+Creating index names converntions: **idx_TableName_KeyForIndex** so idx_DBCustomers_Customer_id
+	MicrosoftSQL syntax
+```SQL
+CREATE CLUSTERED INDEX idx_DBCustomers_CustomerID
+ON Sales.DBCustomers (CustomerID)
+```
+
+Dropping a Index:
+```SQL
+DROP INDEX idx_DBCustomers_CustomerID ON Sales.DBCustomers
+```
+
+**HEADS UP**
+In `PostgreSQL`, there's no concept of **clustered index**  the way that SQL Server has it.
+Instead:
+- Every table has one `Physcal storage order` (The heap)
+-  You can tell Postgres to physically reorder the table according to an index using the `CLUSTER` command
+-But the index itself is still just a normal b-tree index.
+
+So the equivalent steps would be
+PostgreSQL:
+```SQL
+-- Create a normal b-tree index
+CREATE INDEX idx_DBCustomers_Customerid
+ON sales.dbCustomers (customerid);
+
+--2. Cluster the table using the index(one time reordering)
+CLUSTER sales.dbcustomers USING idx_dbcustomers_customerid;
+
+-- (optional) If you want future inserts/updates to also be clustered,
+-- you must re-run CLUSTER periodically or set up a maintenance job.
+
+```
+
+
+Composite Index:
+Specifying multiple columns in the index
+	It is very important that the order of the column matches the order in your query
+
+```SQL
+SELECT * FROM Sales.DBCustomers
+WHERE Country = 'USA' AND Score >500
+
+CREATE INDEX idx_DBCustomers_CountryScore
+ON Sales.DBCustomers (Country, Score)
+```
+
+**Leftmost Prefix Rule:**
+Index works only if your query filters start from the first column in the index and follow its order.
+
+Example:
+```SQL
+A,B,C,D
+
+-- Index will be used
+A,
+A,B
+A,B,C
+-- Index will not be used
+B
+A,C
+A,B,D
+
+```
+
+
+#### Indexes By Storage
+
+###### Row store Index:
+- **How it stores data**: Stores entire rows together, one after another
+- **Optimized for: OLTP**(Online Transaction Processing) -> workloads with a lot of inserts, updates and delates
+- **Good For**:
+	- Querying a single record or a small set of records
+	- Transactional systems where you need to access many columns of the same row
+
+```
+Row storage (table with 3 columns A, B, C):
+Row 1: A1, B1, C1
+Row 2: A2, B2, C2
+Row 3: A3, B3, C3
+```
+
+An index (like b-tree) points to rows, then retrieves al columns
+
+###### Column Store Index
+- **How it stores data:** Stores valus of a column together, instead of string entire rows
+- **Optimized for: OLAP** (Online Analytical Processing) -> workloads with alrge scans, aggregations, and analytics
+- **Good for**:
+	- Queries data read a few columns but over milions of rows
+	- Data werehouses, reporting , and aggregationts(`SUM`,`AVG`,`COUNT`, etc.)
+![[Screenshot 2025-08-26 at 4.23.57 PM.png]]
+```mathematica
+Column storage:
+Column A: A1, A2, A3
+Column B: B1, B2, B3
+Column C: C1, C2, C3
+
+```
+
+| Feature               | Row Store Index                   | Column Store Index                                 |
+| --------------------- | --------------------------------- | -------------------------------------------------- |
+| **Data layout**       | Stores full rows together         | Stores columns separately                          |
+| **Best for**          | OLTP (transactions, updates)      | OLAP (analytics, reporting)                        |
+| **Query speed**       | Fast for small lookups            | Fast for large scans/aggregations                  |
+| **Compression**       | Limited                           | Very high (columns compress well)                  |
+| **Write performance** | Strong (rows updated easily)      | Slower (updating columnar storage is costly)       |
+| **Examples**          | PostgreSQL default B-tree indexes | SQL Server Columnstore Index, ClickHouse, BigQuery |
+![[Screenshot 2025-08-26 at 4.23.26 PM.png]]
+![[Screenshot 2025-08-26 at 4.58.32 PM.png]]
+
+##### Column store index
+In Microsoft SQL
+
+```SQL
+CREATE [CLUSTERED | NONCLUSTERED] [COLUMNSTORE] INDEX index_name
+ON table_name (column1,column2, ...)
+```
+![[Screenshot 2025-08-26 at 5.06.44 PM.png]]
+
+---
+
+#### Unique Indexes
+Ensure no duplicate values exist in specific column
+**Benefits:**
+- Enforce uniqueness
+- Slightly increase query performance
+
+
+Performance:
+	Writing to an unique index is slower than non-unique but reading from an unique index is faster than non-unique
+
+```SQL
+--Syntax of unique index
+-- Unique index on a single column
+CREATE UNIQUE INDEX idx_users_email
+ON users (email);
+
+-- Unique index on multiple columns
+CREATE UNIQUE INDEX idx_orders_customer_product
+ON orders (customer_id, product_id);
+
+-- Unique index on an expression
+CREATE UNIQUE INDEX idx_users_lower_email
+ON users (LOWER(email));
+```
+![[Screenshot 2025-08-27 at 6.09.32 AM.png]]
+Cannot be used on columns that already have duplicates .
+
+
+#### Filtered Index
+An index that includes only rows meeting the specified conditions
+**Benefits:**
+- Target optimization
+- Reduce storage: Less data in the index
+
+Syntax:
+```SQL
+CREATE INDEX index_name
+ON table_name (column1, column2, ...)
+WHERE condition;
+
+
+CREATE INDEX idx_active_users
+ON users (last_login)
+WHERE is_active = true;
+```
+![[Screenshot 2025-08-27 at 6.09.32 AM.png]]
+
+
+#### Indexes Need maintenance
+- Monitor Index usage
+- Monitor missing indexes
+- Monitor duplicate indexes
+- Update statistics
+- Monitor Fragmentations
+
+List of System Catalogs in PostgreSQL:
+https://www.postgresql.org/docs/current/catalogs.html
+
+Most Common System Catalogs:
+
+|Catalog|Purpose|
+|---|---|
+|**pg_class**|Tables, indexes, sequences, views (all “relations”)|
+|**pg_attribute**|Columns of tables, indexes, views|
+|**pg_namespace**|Schemas|
+|**pg_index**|Index definitions|
+|**pg_constraint**|Constraints (PK, FK, CHECK, UNIQUE)|
+|**pg_database**|Databases|
+|**pg_tablespace**|Tablespaces|
+|**pg_roles** / **pg_authid**|Roles and users|
+|**pg_statistic**|Column statistics for the planner|
+|**pg_type**|Data types|
+|**pg_operator**|Operators (`=`, `<`, custom ones)|
+|**pg_proc**|Functions and procedures|
+|**pg_trigger**|Triggers|
+|**pg_enum**|ENUM values|
+|**pg_collation**|Collations|
+|**pg_class.relkind**|Object kind: `r`=table, `i`=index, `v`=view, `m`=materialized view, `S`=sequence, `f`=foreign table|
+
+
+
+##### Monitor Index Usage
+Only in Microsoft SQL server
+```SQL
+sp_healpindex 'Sales.DBCustomers'
+-- Microsoft SQL
+SELECT * FROM sys.indexes
+
+-- PostgreSQL
+SELECT * FROM pg_index
+
+--Joining pg_index, with pg_class, pg_namespace
+SELECT
+    n.nspname       AS schema_name,
+    t.relname       AS table_name,
+    i.relname       AS index_name,
+    ix.indisunique  AS is_unique,
+    ix.indisprimary AS is_primary,
+    ix.indpred IS NOT NULL AS is_partial
+FROM pg_index ix
+JOIN pg_class t   ON t.oid = ix.indrelid          -- table
+JOIN pg_namespace n ON n.oid = t.relnamespace     -- schema
+JOIN pg_class i   ON i.oid = ix.indexrelid        -- index
+WHERE n.nspname NOT IN ('pg_catalog', 'pg_toast', 'information_schema')
+ORDER BY schema_name, table_name, index_name;
+
+```
+
+
+|SQL Server (`sys.*`)|PostgreSQL (`pg_*`)|Purpose|
+|---|---|---|
+|`sys.tables`|`pg_class` (with `relkind = 'r'`)|User tables|
+|`sys.indexes`|`pg_index`|Index metadata|
+|`sys.index_columns`|`pg_attribute` (joined via `indkey`)|Index column details|
+|`sys.schemas`|`pg_namespace`|Schemas|
+|`sys.databases`|`pg_database`|Databases|
+
+| SQL Server DMV                   | PostgreSQL Equivalent                      | Purpose                     |
+| -------------------------------- | ------------------------------------------ | --------------------------- |
+| `sys.dm_db_index_usage_stats`    | `pg_stat_all_indexes`                      | Index scan/usage statistics |
+| `sys.dm_db_partition_stats`      | `pg_class` (with `reltuples`, `relpages`)  | Table size, tuple count     |
+| `sys.dm_exec_requests`           | `pg_stat_activity`                         | Current queries/sessions    |
+| `sys.dm_exec_sessions`           | `pg_stat_activity` + `pg_stat_replication` | Session info                |
+| `sys.dm_exec_connections`        | `pg_stat_activity` + `pg_stat_ssl`         | Connection info             |
+| `sys.dm_tran_locks`              | `pg_locks`                                 | Lock info                   |
+| `sys.dm_os_performance_counters` | `pg_stat_database` + `pg_stat_io_*`        | Perf counters, I/O stats    |
+### 🔧 Most commonly used preloadable libraries
+
+Here are the ones you’ll see most often in real-world setups:
+
+|Library|Purpose|
+|---|---|
+|**pg_stat_statements**|Tracks execution statistics for all queries (essential for performance tuning).|
+|**auto_explain**|Automatically logs `EXPLAIN` plans for slow queries. Great for debugging query performance.|
+|**pg_hint_plan**|Lets you manually influence the planner (rare, but used in special cases).|
+|**timescaledb**|If you use TimescaleDB (time-series extension), it needs preloading.|
+|**pg_prewarm**|Preloads table/index data into buffer cache on startup.|
+|**hypopg**|“Hypothetical indexes” → lets you test the planner’s behavior with an index **before actually creating it**.|
+
+![[Screenshot 2025-08-27 at 2.08.32 PM.png]]
+##### Monitor missing indexes
+In SQL server, you have `sys.dm_db_missing_index_details` . In PostgreSQL doesn't have a direct "missing index advisor", but it gives **you tools to find slow queries and check whether they'd benefit from an index**
+
+How do you do in Postgres:
+1. Enable the `pg_stat_statements` extension (tracks query performance) it has to be loaded into docker->var->lib-> postgressql-> data -> postgresql.conf
+
+	```SQL
+	CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+	```
+
+	Then Query:
+
+	```SQL
+	SELECT query calls, total_exec_time, rows
+	FROM pg_stat_statements
+	ORDER BY total_exec_time DESC
+	LIMIT 10;
+	```
+
+
+2. Run `Explain (ANALYZE, BUFFERS)` on slow queries
+	if you see a SeqScan (sequential scan) on a lrage tbale when filteringby a column, it usually means an index would help
+	```SQL
+	EXPLAIN (ANALYZE, BUFFERS)
+	SELECT * FROM orders WHERE customer_id =123
+	```
+
+	if it shows `Seq Scan on orders`, you may want an index on customer_id
+
+
+3. Check unused/rarely used indexes(so you don't over index)
+
+```SQL
+SELECT schemaname, relname AS table_name, indexrelname AS index_name,
+       idx_scan, idx_tup_read, idx_tup_fetch
+FROM pg_stat_all_indexes
+WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+ORDER BY idx_scan ASC;
+```
+
+indexes with idx_scan  = 0 are never used -> candidates for removal
+
+##### Update Statistics
+In SQL server, your explicitly run `UPDATE STATISTICS` or rely on auto-update.
+In PostgreSQL, the quivalent is the `ANALYZE` command
+- **Automatic**: PostgreSQL has `autovacuum` -> it runs `ANALYZE` automatically in the background to update statistics when tables change.
+- **Manual**: You can force if needed
+
+```SQL
+ANALYZE;                -- analyze all tables
+ANALYZE my_table;       -- analyze one table
+ANALYZE my_table(col1); -- analyze a single column
+```
+ This updates `pg_statistic` so the quary planner has the latest info.
+ - When to run manually:
+	 - After bulk inserts/updates/deletes
+	 - After `COPY` in lots of data
+	 - Before running performance critical queries
+
+Updating statics
+1. Weekly job to update statistics on weekends
+2. After migrating data
+
+
+#### Monitor Fragmentations
+- Unused spaces in data pages
+- Data pages are out of order
+
+Fragmentation Methods
+- Reorganize
+	- Defragments leaf nodes to keep them sorted
+	- "Light" Operation
+- Rebuild
+	- Recrets Index from scratch
+	- "Heavy" Operations
+
+When to Defragment
+- <10 % No action needed
+- 10-30% Reorganize
+- > 30% Rebuild it
+
+
+### EXECUTION PLAN
+Roadmap generated by a database on how it will execute your query step by step
+
+- Understand how SQL executes your query
+- How many resources your query consumes
+- Check if your new indexes are used
+- Testing & Experimenting Indexes
+
+**Estimated vs Actual Plan**
+If the predictions don't match the Actual Execution Plan, this indicate issues like inaccurate statistics or outdated indexes, leading to poor performance
+
+
+Table Scan
+Reads the entire table, page by page and row by row "everything" which can lead to slower query performance on large tables.
+
+Index Scan
+Scns all data in an index to find matching rows
+
+
+##### Joins Algorithms
+**Nested loops**: Compares tables row by rows; best for small tables.
+**Hash Match**: Matches rows using a hash table; best for large tables
+**Merge join**: Merge two sorted tables; efficient when both are sorted
+
+
+
+#### SQL HINTS
+Commands you add to a query to force the database to run it on a specific way for better performance
+
+1. Test hints in all project environments (DEV, PROD) as performance may vary
+2. Hints are quick fixes(workaround, not solution) You still have to find the cause and fix it.
+
+
+### INDEXING STRATEGY
+Golden Rule: Avoid over indexing
+Indexes slow down write performance when:
+- Data is inserted
+- updated
+- deleted
+Database has to update indexes.
+To many indexes can confuse execution plan, increase planing time, Choose a suboptimal plan
+
+
+#1 INDEXING STRATEGY
+What is the main goal   of our indexing strategy?
+Two types of databases:
+1. OLAP (Online Analytical Processing)
+2. OLTP (Online transactional processing)
+
+Two strategies:
+	- Optimize READ performance
+	- Optimize WRITE performance
+![[Screenshot 2025-08-27 at 5.30.37 PM.png]]![[Screenshot 2025-08-27 at 5.31.01 PM.png]]
+
+---
+
+# 📂 PostgreSQL Indexes
+
+## 🔹 What are Indexes?
+
+- Special database objects that improve **read performance** by providing quick access paths to data.
+- Similar to a book’s index → instead of scanning all rows, Postgres jumps directly to matching rows.
+- Tradeoff: **Faster reads** but **slower writes** (INSERT/UPDATE/DELETE) because indexes must be maintained.
+
+
+---
+
+## 🔹 Types of Indexes in PostgreSQL
+Postgres supports many index types, but **B-Tree** is the default.
+
+### 1. B-Tree Index (default)
+- Balanced tree structure.
+- Best for: equality (`=`) and range queries (`<`, `<=`, `BETWEEN`).
+
+```sql
+CREATE INDEX idx_customers_name ON customers(last_name);
+```
+
+---
+
+### 2. Hash Index
+- Uses a hash function → efficient for equality checks only (`=`).
+- Not ordered, so range queries don’t work.
+
+```sql
+CREATE INDEX idx_customers_email_hash ON customers USING HASH(email);
+```
+
+---
+
+### 3. GIN (Generalized Inverted Index)
+- Ideal for full-text search, JSONB, and array columns.
+
+```sql
+CREATE INDEX idx_docs_content_gin ON documents USING GIN(to_tsvector('english', content));
+CREATE INDEX idx_orders_tags_gin ON orders USING GIN(tags);
+```
+
+---
+
+### 4. GiST (Generalized Search Tree)
+- Supports complex data types (geometric, ranges, full-text).
+- Useful for nearest-neighbor searches.
+
+```sql
+CREATE INDEX idx_locations_gist ON locations USING GIST(geom);
+```
+
+---
+
+### 5. BRIN (Block Range Index)
+- Very lightweight, stores summary of blocks.
+- Efficient for **large sequential data** (e.g., time-series, logs).
+
+```sql
+CREATE INDEX idx_logs_date_brin ON logs USING BRIN(log_date);
+```
+
+---
+
+## 🔹 Heap vs Clustered Storage
+- In PostgreSQL, tables are **heaps** by default (unsorted storage).
+- SQL Server has _Clustered Indexes_ (physically sorting the table).
+    → In PostgreSQL:
+    - You can simulate by using `CLUSTER` on an index (one-time sort).
+    - Table won’t stay sorted automatically — needs re-clustering.
+
+
+```sql
+CLUSTER customers USING idx_customers_name;
+```
+
+---
+
+## 🔹 Clustered vs Non-Clustered (Postgres perspective)
+
+| Concept             | SQL Server                                | PostgreSQL Equivalent             |
+| ------------------- | ----------------------------------------- | --------------------------------- |
+| Clustered Index     | Table sorted & stored physically by index | `CLUSTER` command (not automatic) |
+| Non-Clustered Index | Separate index structure                  | Normal B-Tree index (default)     |
+
+---
+
+## 🔹 Index Syntax (Postgres)
+
+```sql
+-- Basic B-Tree (default)
+CREATE INDEX idx_city ON customers(city);
+
+-- Composite index
+CREATE INDEX idx_name ON customers(last_name, first_name DESC);
+
+-- Unique index
+CREATE UNIQUE INDEX idx_email_unique ON customers(email);
+
+-- Partial (Filtered) index
+CREATE INDEX idx_active_customers ON customers(email)
+WHERE is_active = true;
+
+-- Expression index
+CREATE INDEX idx_lower_email ON customers(LOWER(email));
+```
+
+---
+## 🔹 Rowstore vs Columnstore
+- SQL Server supports **Columnstore indexes** for analytics.
+- PostgreSQL does **not** have native columnstore indexes, but you can use:
+    - **cstore_fdw** (extension) or
+    - **TimescaleDB/ClickHouse/Parquet** for analytics.
+- PostgreSQL indexes are **row-based** (rowstore).
+
+
+---
+## 🔹 Unique Index
+- Ensures values in the column(s) are unique.
+- Same effect as defining a `UNIQUE` constraint.
+
+
+```sql
+CREATE UNIQUE INDEX idx_customers_email ON customers(email);
+```
+
+---
+## 🔹 Partial (Filtered) Index
+- Index only a subset of rows → smaller, faster.
+
+```sql
+CREATE INDEX idx_active_users ON users(last_login)
+WHERE active = true;
+```
+
+---
+## 🔹 When to Use Which Index?
+- **Heap (no index)** → Fast bulk inserts, staging tables.
+- **B-Tree** → Primary keys, foreign keys, range queries.
+- **Hash** → Equality only (`=`).
+- **GIN** → Full-text search, arrays, JSONB.
+- **GiST** → Geospatial, ranges, similarity search.
+- **BRIN** → Time-series / sequential data.
+- **Unique Index** → Enforce uniqueness.
+- **Partial Index** → Subsets of data (e.g., active users).
+- **Expression Index** → Index on computed values.
+
+
+---
+
+## 🔹 Indexing Strategy in PostgreSQL
+
+1. Identify slow queries (`EXPLAIN ANALYZE`).
+2. Choose the right index type.
+3. Test and compare execution plans.
+4. Monitor with `pg_stat_user_indexes`.
+5. Drop unused/duplicate indexes.
+6. Run `VACUUM ANALYZE` / `ANALYZE` to update statistics.
+
+
+---
+
+✅ **Key Takeaways**
+
+- PostgreSQL defaults to **B-Tree** indexes.
+- Unlike SQL Server, Postgres does **not** have always-sorted clustered indexes.
+- Use **specialized index types** (GIN, GiST, BRIN) depending on workload.
+- Keep indexes lean: every index speeds up reads but slows down writes.
+
+---
+
+# 📂 SQL Partitioning
+
+## 🔹 Why We Need Partitions
+
+- Manage very large tables by splitting them into smaller, more manageable parts.
+- Improves query performance by scanning only relevant partitions.
+- Helps with **maintenance** (index rebuilds, statistics updates, backups).
+- Improves **data availability** — partitions can be loaded, switched, or archived independently.
+- Supports efficient **data lifecycle management** (recent data in fast storage, old data in cheaper storage).
+
+---
+## 🔹 Partitioning Functions
+Partitioning is based on functions that define **how rows are distributed**.
+
+### 1. Range Partitioning
+
+Distributes rows based on ranges of column values.
+📌 Example: Partition sales data by year.
+
+``` SQL
+CREATE TABLE sales
+ (
+     id SERIAL PRIMARY KEY,
+     sale_date DATE NOT NULL,
+     amount NUMERIC
+) PARTITION BY RANGE (sale_date);
+
+CREATE TABLE sales_2019 PARTITION OF sales
+FOR VALUES FROM ('2019-01-01') TO ('2020-01-01');
+
+CREATE TABLE sales_2020 PARTITION OF sales
+FOR VALUES FROM ('2020-01-01') TO ('2021-01-01');
+```
+---
+
+### 2. List Partitioning
+
+Distributes rows based on a list of specific values.
+📌 Example: Partition by region.
+
+```SQL
+CREATE TABLE customers
+(
+	id SERIAL PRIMARY KEY,
+	region TEXT NOT NULL,
+	name TEXT
+) PARTITION BY LIST (region);
+
+CREATE TABLE customers_us PARTITION OF customers
+FOR VALUES IN ('US');
+CREATE TABLE customers_eu PARTITION OF customers
+FOR VALUES IN ('EU');
+CREATE TABLE customers_apac PARTITION OF customers
+FOR VALUES IN ('APAC');
+```
+
+---
+
+### 3. Hash Partitioning
+
+Distributes rows using a hash function on a column.
+📌 Example: Partition customer data by hashing `customer_id`.
+
+``` SQL
+CREATE TABLE orders
+(
+	id SERIAL PRIMARY KEY,
+	customer_id INT NOT NULL,
+	order_date DATE
+) PARTITION BY HASH (customer_id);
+
+CREATE TABLE orders_p1 PARTITION OF orders
+FOR VALUES WITH (MODULUS 4, REMAINDER 0);
+
+CREATE TABLE orders_p2 PARTITION OF orders
+FOR VALUES WITH (MODULUS 4, REMAINDER 1);
+
+CREATE TABLE orders_p3 PARTITION OF orders
+FOR VALUES WITH (MODULUS 4, REMAINDER 2);
+
+CREATE TABLE orders_p4 PARTITION OF orders
+FOR VALUES WITH (MODULUS 4, REMAINDER 3);`
+```
+---
+
+### 4. Composite Partitioning
+
+Combines partitioning strategies.
+📌 Example: Range by year, then Hash inside each year.
+
+``` SQL
+CREATE TABLE logs
+(
+	id SERIAL PRIMARY KEY,
+	log_date DATE NOT NULL,
+	user_id INT NOT NULL
+) PARTITION BY RANGE (log_date);
+
+CREATE TABLE logs_2024 PARTITION OF logs
+FOR VALUES FROM ('2024-01-01') TO ('2025-01-01')
+PARTITION BY HASH (user_id);
+
+CREATE TABLE logs_2024_p1 PARTITION OF logs_2024
+FOR VALUES WITH (MODULUS 4, REMAINDER 0);
+
+CREATE TABLE logs_2024_p2 PARTITION OF logs_2024
+FOR VALUES WITH (MODULUS 4, REMAINDER 1);
+
+CREATE TABLE logs_2024_p3 PARTITION OF logs_2024
+FOR VALUES WITH (MODULUS 4, REMAINDER 2);
+
+CREATE TABLE logs_2024_p4 PARTITION OF logs_2024
+ FOR VALUES WITH (MODULUS 4, REMAINDER 3);`
+```
+---
+
+## 🔹 Partitioning Steps
+
+1. Define partition function (RANGE, LIST, HASH).
+
+2. Define partition scheme (mapping values → partitions).
+
+3. Create partitions for each range/list/hash.
+
+
+---
+
+## 🔹 Partitioning & Indexes
+
+- **Clustered Indexes**: In Postgres, a partitioned table does not store data itself, but partitions can have their own indexes.
+
+- **Local Indexes**: Created on each partition individually.
+
+- **Global Indexes**: ❌ Not supported in Postgres (must manage per-partition indexes).
+
+- **Aligned Indexes**: Each partition has the same index for consistency.
+
+
+```SQL
+-- Example: Index on partitioned table
+CREATE INDEX idx_sales_date ON sales_2019 (sale_date);
+CREATE INDEX idx_sales_date_2020 ON sales_2020 (sale_date);
+
+---
+```
+
+✅ **Key Benefits Recap:**
+
+- Faster queries (partition pruning).
+- Easier maintenance (smaller chunks).
+- Better storage/resource management.
+
+
+
+## PERFORMANCE TIPS #30
+Always check the execution plan to confirm performance improvements when optimizing your query, if there's no improvement then just focus on readability
+
+### Fetching Data
+##### #1 Select Only what Needed
+```SQL
+-- Bad Practice:
+SELECT * FROM Sales.Customers;
+-- Good Practice:
+SELECT CustomerID, FirstName, LastName FROM Sales.Customers;
+```
+
+##### #2 Avoid Unnecessary **DISTINCT** and **ORDER BY**
+Both operations are very memory expensive
+
+##### #3 For Exploration Purposes, Limit the Rows
+```SQL
+-- Bad Practice
+SELECT
+	orderId,
+	Sales
+FROM Sales.Orders
+
+-- Good practice
+SELECT TOP 10
+	orderId,
+	Sales
+FROM Sales.Orders
+```
+
+
+### Filtering Data
+##### #4 Filtering Optimization
+Create an Index on frequently used Columns in WHERE clause
+```SQL
+SELECT * FROM Sales.Orders WHERE orderStatus = 'Delivered'
+
+CREATE INDEX idx_Orders_OrderStatus ON Sales.orders(Orderstatus)
+```
+
+##### #5 Avoid applying functions to columns in WHERE clause
+Functions on columns can block index access.
+```SQL
+-- Bad Practice
+SELECT * FROM SALES.ORDERS
+WHERE LOWER(orderStatus ) = 'delivered'
+
+-- Good Practice:
+SELECT * FROM SALES.ORDERS
+WHERE OrderStatus = 'Delivered'
+
+-- Bad Practice:
+SELECT *
+FROM Sales.Orders
+WHERE YEAR(OrderDate) = 2025
+
+-- Good Practice
+SELECT *
+FROM Sales.Orders
+WHERE OrderDate BETWEEN '2025-01-01' AND '2025-12-31'
+```
+
+
+##### #6 Avoid Using leading wildcards, as they prevent index usage
+```SQL
+-- Bad Practice
+SELECT *
+FROM Sales.Customers
+WHERE LastName LIKE '%Gold%'
+
+-- Good Practice
+SELECT *
+FROM Sales.Customers
+WHERE LastName LIKE 'Gold%'
+```
+
+##### #7 Using in Instead of multiple OR conditions
+```SQL
+-- Bad Practice
+SELECT *
+FROM Sales.Orders
+WHERE CustomerID = 1 OR CustomerID = 2 OR CustomerID = 3
+
+-- Good Practice
+SELECT *
+FROM Sales.Orders
+WHERE CustomerID IN (1,2,3)
+```
+
+
+### Joining Data
+##### #8 Understand the Performance implications of different join types. Use Inner join when possible for efficiency
+
+```SQL
+-- Best performance
+SELECT c.FirstName , o.OrderId FROM Sales.Customers c INNER JOIN Sales.Orders o ON c.customerID = o.CustomerID
+
+-- Slightly slower performance
+SELECT c.FirstName , o.OrderId FROM Sales.Customers c RIGHT JOIN Sales.Orders o ON c.customerID = o.CustomerID
+SELECT c.FirstName , o.OrderId FROM Sales.Customers c LEFTs JOIN Sales.Orders o ON c.customerID = o.CustomerID
+
+-- Worst Perfromance
+SELECT c.FirstName , o.OrderId FROM Sales.Customers c OUTER JOIN Sales.Orders o ON c.customerID = o.CustomerID
+```
+
+
+##### #9  Use Explicit Join (ansi Join) Instead of implicit Join (non-Ansi Join)
+```SQL
+-- Bad Practice
+SELECT o.OrderID, c.FirstName
+FROM Sales.Customers c, Sales.Orders o
+WHERE c.CustomerID = o.CustomerID
+
+-- Good Practice
+SELECT o.OrderID, c.FirstName
+FROM Sales.Customers c
+INNER JOIN Sales.Orders o
+ON c.CustomerID = o.CustomerID
+```
+
+##### #10 Ensure that the Columns Used in the ON clause are Indexed
+Because indexes speed up lookout process.
+```SQL
+-- Good Practice
+SELECT o.OrderID, c.FirstName
+FROM Sales.Customers c
+INNER JOIN Sales.Orders o
+ON c.CustomerID = o.CustomerID
+
+CREATE INDEX IX_Orders_CustomerID ON Sales.Orders(CustomerID)
+
+```
+
+
+##### #11 Filter Before Joining Big Tables
+```SQL
+-- Filter After Join (WHERE) Best for medium small size
+SELECT c.FirstName, o.OrderID
+FROM Sales.Customers c
+INNER JOIN Sales.Orders o
+ON c.customerId = o.CustomerID
+WHERE o.OrderStatus = 'Delivered'
+
+-- Filter During Join (ON)
+SELECT c.FirstName, o.OrderID
+FROM Sales.Customers c
+INNER JOIN Sales.Orders o
+ON c.customerId = o.CustomerID
+AND o.OrderStatus = 'Delivered'
+
+
+-- Filter Before JOIN (Subquery) Best For Large Tables
+
+SELECT c.FirstName, o.OrderID
+FROM Sales.Customers c
+INNER JOIN
+(SELECT OrderID, CustomerID FROM Sales.Orders WHERE OrderStatus = 'Delivered') o
+ON c.customerId = o.CustomerID
+```
+
+
+##### #12 Aggregate Before Joining Big Tables
+
+```SQL
+-- Grouping and Joining
+-- Small to medium size table
+SELECT c.CustomerID, c.FirstName, COUNT(o.OrderID) As OrderCount
+FROM Sales.Customer c
+INNER JOIN Sales.Orders o
+ON c.CustomerID = o.CustomerID
+GROUP BY c.CustomerID, c.FirstName
+
+
+-- Pre-Aggregated Subquery
+-- Best for Big table
+SELECT c.CustomerID, c.FirstName, COUNT(o.OrderID) As OrderCount
+FROM Sales.Customer c
+INNER JOIN (
+	SELECT CustomerID, COUNT(OrderID) As OrderCount
+	FROM Sales.Orders
+	GROUP BY CustomerID
+	) o
+ON c.CustomerID = o.CustomerID
+
+
+-- Worst Performance
+-- Correlated Subquery
+SELECT
+	c.CustomerID,
+	c.FirstName,
+	(SELECT COUNT(o.OrderID) FROM Sales.Orders o WHERE o.CustomerID = c.CustomerID ) As OrderCount
+FROM Sales.Customer c
+```
+
+##### #13 Use Union Instead of  OR While Joining Tables
+```SQL
+-- Bad Performanced
+SELECT o.OrderId, c.FirstName
+FROM Sales.Customers c
+INNER JOIN Sales.Orders o
+ON c.CustomerID = o.CustomerID
+OR c.CustomerID = o.SalesPersonID
+
+
+-- Best Practice:
+SELECT o.OrderId, c.FirstName
+FROM Sales.Customers c
+INNER JOIN Sales.Orders o
+ON c.CustomerID = o.CustomerID
+UNION
+SELECT o.OrderId, c.FirstName
+FROM Sales.Customers c
+INNER JOIN Sales.Orders o
+OR c.CustomerID = o.SalesPersonID
+```
+
+##### #14 Be Aware of Nested Loops
+
+```sql
+-- ❌ Bad: Nested loop on large tables
+SELECT *
+FROM orders o
+JOIN customers c ON o.customer_id = c.id;
+
+-- ✅ Best Practice: Use indexes or rewrite with EXISTS/IN
+CREATE INDEX idx_orders_customer_id ON orders(customer_id);
+
+SELECT *
+FROM orders o
+JOIN customers c ON o.customer_id = c.id;
+```
+
+---
+
+##### #15 Use UNION ALL Instead of UNION
+
+```sql
+-- ❌ Bad: UNION removes duplicates (extra sorting)
+SELECT customer_id FROM orders_2023
+UNION
+SELECT customer_id FROM orders_2024;
+
+-- ✅ Best Practice: UNION ALL (faster if duplicates are acceptable)
+SELECT customer_id FROM orders_2023
+UNION ALL
+SELECT customer_id FROM orders_2024;
+```
+
+---
+
+##### #16 Use UNION ALL + DISTINCT Instead of UNION
+
+```sql
+-- ❌ Bad: UNION does deduplication every time
+SELECT customer_id FROM orders_2023
+UNION
+SELECT customer_id FROM orders_2024;
+
+-- ✅ Best Practice: UNION ALL then DISTINCT
+SELECT DISTINCT customer_id
+FROM (
+    SELECT customer_id FROM orders_2023
+    UNION ALL
+    SELECT customer_id FROM orders_2024
+) t;
+```
+
+---
+### AGGREGATING DATA
+
+##### #17 Use BRIN (Columnstore-like) Indexes for Large Tables
+
+```sql
+-- ❌ Bad: Full table scan on time-series data
+SELECT * FROM logs WHERE log_date >= '2024-01-01';
+
+-- ✅ Best Practice: BRIN index (lightweight, block-based)
+CREATE INDEX idx_logs_date_brin ON logs USING BRIN(log_date);
+```
+
+---
+
+##### #18 Pre-Aggregate Data
+
+```sql
+-- ❌ Bad: Aggregate huge tables on every query
+SELECT customer_id, SUM(amount)
+FROM sales
+GROUP BY customer_id;
+
+-- ✅ Best Practice: Materialized View (pre-computed)
+CREATE MATERIALIZED VIEW mv_sales_summary AS
+SELECT customer_id, SUM(amount) total_amount
+FROM sales
+GROUP BY customer_id;
+
+-- Refresh when needed
+REFRESH MATERIALIZED VIEW mv_sales_summary;
+```
+
+---
+
+### SUBQUERIES
+##### #19 Use EXISTS Instead of IN for Large Lists
+
+```sql
+-- ❌ Bad: IN with many values
+SELECT * FROM customers
+WHERE id IN (SELECT customer_id FROM orders);
+
+-- ✅ Best Practice: EXISTS
+SELECT * FROM customers c
+WHERE EXISTS (
+    SELECT 1 FROM orders o WHERE o.customer_id = c.id
+);
+```
+
+---
+
+##### #20 Use CTEs to Simplify Queries
+
+```sql
+-- ❌ Bad: Repeated subqueries
+SELECT c.id, c.name,
+   (SELECT COUNT(*) FROM orders o WHERE o.customer_id = c.id) order_count
+FROM customers c;
+
+-- ✅ Best Practice: CTE
+WITH order_counts AS (
+    SELECT customer_id, COUNT(*) cnt
+    FROM orders
+    GROUP BY customer_id
+)
+SELECT c.id, c.name, oc.cnt
+FROM customers c
+LEFT JOIN order_counts oc ON c.id = oc.customer_id;
+```
+
+---
+### DDL
+##### #21 Choose Correct Data Types
+
+```sql
+-- ❌ Bad: Using TEXT for fixed length values
+CREATE TABLE users (phone TEXT);
+
+-- ✅ Best Practice: Use VARCHAR(n) or NUMERIC
+CREATE TABLE users (phone VARCHAR(15));
+
+-- Avoid using Varchar(n) to but it is necessary most of the time
+
+```
+
+---
+
+##### #22 Avoid Excessive Lengths
+
+```sql
+-- ❌ Bad
+CREATE TABLE users (bio VARCHAR(10000));
+-- OR MAX
+
+-- ✅ Best Practice
+CREATE TABLE users (bio VARCHAR(500));
+```
+
+---
+
+##### #23 Use NOT NULL Constraints
+
+```sql
+-- ❌ Bad: Columns allow NULLs by default
+CREATE TABLE orders (order_date DATE);
+
+-- ✅ Best Practice: Use NOT NULL when possible
+CREATE TABLE orders (order_date DATE NOT NULL);
+```
+
+---
+
+##### #24 Always Have a Primary Key
+
+```sql
+-- ❌ Bad: No primary key
+CREATE TABLE logs (message TEXT, created_at TIMESTAMP);
+
+-- ✅ Best Practice
+CREATE TABLE logs (
+    id BIGSERIAL PRIMARY KEY,
+    message TEXT,
+    created_at TIMESTAMP NOT NULL
+);
+```
+
+---
+
+##### #25 Index Foreign Keys
+
+```sql
+-- ❌ Bad: Foreign key without index (slow joins)
+ALTER TABLE orders
+ADD CONSTRAINT fk_orders_customers FOREIGN KEY (customer_id) REFERENCES customers(id);
+
+-- ✅ Best Practice: Add index
+CREATE INDEX idx_orders_customer_id ON orders(customer_id);
+```
+
+---
+### INDEXING
+##### #26 Avoid Over Indexing
+
+```sql
+-- ❌ Bad: Multiple indexes on same column
+CREATE INDEX idx_orders_customer_id1 ON orders(customer_id);
+CREATE INDEX idx_orders_customer_id2 ON orders(customer_id);
+
+-- ✅ Best Practice: Keep only what’s needed
+DROP INDEX idx_orders_customer_id2;
+```
+
+---
+
+##### #27 Drop Unused Indexes
+
+```sql
+-- Find unused indexes
+SELECT relname, idx_scan
+FROM pg_stat_user_indexes
+JOIN pg_index USING (indexrelid)
+WHERE idx_scan = 0;  -- never used
+
+-- Drop unused ones
+DROP INDEX idx_unused;
+```
+
+---
+
+##### #28 Keep Statistics Updated Weekly
+
+```sql
+-- Update statistics for optimizer
+ANALYZE sales;
+```
+
+---
+
+##### #29 Rebuild/Reorganize Indexes Weekly
+
+```sql
+-- Reorganize (lightweight)
+REINDEX TABLE customers;
+
+-- Or specific index
+REINDEX INDEX idx_customers_name;
+```
+
+---
+
+##### #30 Partition Large Tables
+
+```sql
+-- ❌ Bad: Huge single-table scans
+SELECT * FROM sales WHERE sale_date >= '2024-01-01';
+
+-- ✅ Best Practice: Partitioning
+CREATE TABLE sales (
+    id BIGSERIAL,
+    sale_date DATE NOT NULL,
+    amount NUMERIC
+) PARTITION BY RANGE (sale_date);
+
+CREATE TABLE sales_2024 PARTITION OF sales
+FOR VALUES FROM ('2024-01-01') TO ('2025-01-01');
+```
+
+---
+
+✅ **Key Takeaway**: Always balance **indexing** and **query rewrites** with **storage and write costs**. Use `EXPLAIN ANALYZE` in PostgreSQL to confirm improvements.
+
+---
+
+## SQL PROJECTS:
+
+**Data warehousing**
+"Organize, Structure, Prepare Data"
+- ETL /ELT Processing
+- Data Architecture
+- Data Integration
+- Data Cleansing
+- Data Load
+- Data Modelling
+
+**Exploratory Data Analysis (EDA)**
+"Understand data"
+- Basic Queries
+- Data profiling
+- Simple Aggregation
+- Subquery
+
+**Advanced Data Analytics**
+"Answer business questions"
+- Complex queries
+- Windows Functions
+- CTE
+- Subqueries
+- Reports
+
+
+
+#### Data Warehousing
+A subject-oriented, integrated, time-variant, and non-volatile collection of data in support of management's decision-making process.
+![[Screenshot 2025-08-28 at 3.32.50 PM.png]]
+
+In **Data Engineering**, **ETL** stands for:
+**Extract → Transform → Load**
+- **Extract** → Pull data from various sources (databases, APIs, flat files, logs, etc.).
+- **Transform** → Clean, standardize, and reshape the data (e.g., filtering, aggregations, joining, applying business rules).
+- **Load** → Store the transformed data into a target
+
+Depending on the Design of your Data Architecture you might just use One Function from ETL or all 3 or just 2
+![[Screenshot 2025-08-28 at 3.38.03 PM.png]]
+
+
+Overview of Different Techniques in the ETL:
+**Extractions:**
+- `Extractions Methods:`
+	-==Pull Extraction== Pulling the data from the source
+	-==Push Extraction== the source system is  Pushing the data to the warehouse
+- `Extract Types:`
+	- ==Full Extractions :== Every day we load all the data to the warehouse
+	- ==Incremental Extraction:== Identify only the new changing data
+- `Extract Techniques`
+	- ==Manual Data Extraction== access the source system and manually get the data
+	- ==Database Querying== connect ourselves to the database and querying the data
+	- ==File parsing==
+	- ==APi Calls==
+	- ==Event Based Streaming== kafka
+	- ==Web Scraping==
+	- ==CDC== Change data capture
+
+
+**Transformation**:
+	- ==Data Enrichment== add values to our data set
+	==- Data Integration== multiple source to one data model
+	==- Derived Columns==
+	==- Data Normalization and Standardization== mapping to more friendly values
+	==- Business Rules & Logic==
+	==- Data Aggregation Aggregate==
+
+
+- Type of Transformatio `Data Cleansing`:
+		- ==Remove Duplicates==
+		==- Data filtering==
+		==- Handling MIssing data==
+		==- Handling Invalid Values==
+		==- Outlier Detection==
+		==- Data type Casting==
+		==- Handling Unwanted spaces==
+
+
+**Load**:
+	`Processing Type`:
+			**- Batch processing**
+			- Streaming Processing
+	`Load Methods`:
+			**- Full Load:**
+				- Truncate & Insert
+				- Upsert
+				- Drop, Create, Insert
+			**- Incremental Load:**
+				- Upsert
+				- Append
+				- Merge
+	`Slowly Changing Dimensions (SCD):`
+				- SCD O No Historization
+				- SCD I Overwrite
+				- SCD2 Historization
+				- SCD...
+
+
+##### Data warehouse Project
+
+Project Plan:
+Data Warehouse
+
+
+- Requirements Analysis
+- Design Data Architecture
+	- Choose data Management Approach
+	- Brainstorm & Design the Layers
+- Project Initialization:
+	- Create Git Repo & prepare the structure
+	- Create database and schema
+
+---
+### **Data Architect:**
+
+#### 1. **Data Warehouse** 🏢
+- **What it is**: Centralized, structured repository optimized for **analytics & reporting**.
+- **Data type**: Mostly structured (tables, schemas).
+- **Strengths**: Great for BI dashboards, KPIs, historical analysis.
+- **Tools**: Snowflake, Amazon Redshift, Google BigQuery.
+
+#### 2. **Data Lake** 🌊
+- **What it is**: Large storage system for **raw data** (structured + unstructured).
+- **Data type**: Anything — logs, images, JSON, CSV, video, IoT data.
+- **Strengths**: Flexible, scalable, cheap storage for big data.
+- **Tools**: Amazon S3 + Athena, Azure Data Lake, Hadoop HDFS.
+
+#### 3. **Data Lakehouse** 🏠🌊
+- **What it is**: Hybrid of **data lake + data warehouse**.
+- **Data type**: Can handle raw + structured data in one system.
+- **Strengths**: Supports both **BI (structured queries)** and **AI/ML (raw/unstructured data)**.
+- **Tools**: Databricks Delta Lake, Apache Iceberg, Snowflake with Unstructured Data.
+
+#### 4. **Data Mesh** 🔗
+- **What it is**: Decentralized approach — treats data as a **product** owned by domain teams.
+- **Data type**: Distributed, domain-oriented.
+- **Strengths**: Scales in large organizations, avoids central bottlenecks.
+- **Tools**: Conceptual framework — implemented on top of warehouses/lakes with APIs, governance, and self-service pipelines.
+
+
+---
+
+👉 Quick analogy:
+
+- **Warehouse** = Library (structured, organized books).
+- **Lake** = Ocean (all kinds of raw data dumped in).
+- **Lakehouse** = Smart library on a lake (raw + structured, one place).
+- **Mesh** = Network of mini-libraries (data owned by each department, but connected).
+
+
+### Data Warehouse  🏢
+#### 1. Top-Down Approach (Inmon’s Approach)
+
+- **Proposed by:** Bill Inmon (the "Father of Data Warehousing").
+- **Philosophy:** Start with an **enterprise-wide data warehouse** first, then create **data marts** for specific business units.
+- **Characteristics:**
+    - Centralized, normalized (3NF) data warehouse.
+    - Ensures **consistency and integration** across the enterprise.
+    - Data marts are derived from the central warehouse.
+- **Pros:** High data consistency, strong governance.
+- **Cons:** Expensive, time-consuming, slower to show results.
+---
+
+#### 2. Bottom-Up Approach (Kimball’s Approach)
+
+- **Proposed by:** Ralph Kimball.
+- **Philosophy:** Build **data marts** for specific departments first, then integrate them into a **conformed data warehouse**.
+- **Characteristics:**
+    - Uses **star schemas** and dimensional modeling.
+    - Focuses on **quick wins** and delivering value early.
+    - Data warehouse is the integration of departmental marts.
+- **Pros:** Faster implementation, business-friendly, flexible.
+- **Cons:** Risk of data silos if conformed dimensions are not enforced properly.
+---
+
+#### 3. Federated Approach (Hybrid)
+
+- **Philosophy:** Combines existing data warehouses, marts, and operational systems into a **virtual or loosely integrated warehouse**.
+- **Characteristics:**
+    - Data remains distributed but connected through metadata or middleware.
+    - Less emphasis on central storage, more on integration.
+- **Pros:** Lower upfront cost, leverages existing systems.
+- **Cons:** Data quality and performance may suffer; less consistency than Inmon/Kimball.
+---
+
+#### 4. Data Vault Approach
+
+- **Philosophy:** Designed for **agility and auditability**, especially in complex and evolving environments.
+- **Characteristics:**
+    - Uses **Hubs (business keys), Links (relationships), and Satellites (context/history)**.
+    - Highly scalable and adaptable to change.
+    - Focuses on historical tracking and lineage
+- **Pros:** Great for big data and regulatory environments.
+- **Cons:** More complex to query directly; usually requires a presentation layer (like marts).
+---
+
+#### Medallion Architecture (Lakehouse)
+- **Bronze (Raw)** → Ingest all raw data as-is (CSV, JSON, APIs, logs). Immutable, full history.
+- **Silver (Cleansed)** → Clean, deduplicate, standardize, join sources. Trusted, query-ready.
+- **Gold (Business)** → Curated, aggregated, business-level tables. Used for BI dashboards, ML, reporting.
+- _(Optional)_ **Platinum** → Domain-specific KPIs or advanced ML features.
+
+**Key Features:**
+- Layered → Improves data quality step by step.
+- Flexible → Supports both analytics (BI) and AI/ML.
+- Scalable → Handles massive datasets in a data lakehouse.
+- Traceable → Always possible to go back to raw Bronze data.
+
+✅ **Summary:**
+- **Inmon (Top-Down)** → Start big, then derive marts.
+- **Kimball (Bottom-Up)** → Start with marts, integrate later.
+- **Federated** → Loosely connect existing sources.
+- **Data Vault** → Flexible, historical, and scalable.
+
+
+### Design the Layer
+
+|                     | Bronze Layer                             | Silver Layer                                                                    | Gold Layer                                             |
+| ------------------- | ---------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Definition          | Raw, unprocessed data as-is from sources | Clean & Standardized data                                                       | Business Ready Data                                    |
+| Objective           | Traceability & Debugging                 | (Intermediate Level) Prepare for data Analysis                                  | Provide data to be consumed for reporitng or analytics |
+| Object type         | Table s                                  | Tables                                                                          | Views                                                  |
+| Load Methods        | Full Load (Truncate & Insert)            | Full Load (Truncate & Insert)                                                   | None                                                   |
+| Data Transformation | None                                     | Data Cleaning, Standardization, Normalization, Derived Columns, Data Enrichment | Data Aggregation, Integration , Business Logic & Rules |
+| Data Modelling      | None                                     | None                                                                            | Start Schema , Aggregated Object, Flat Tables          |
+| Target Audience     | Data Engineers                           | Data Analyst , Data Engineers                                                   | Data Analyist, Business Users                          |
+#### Separation of Concern SOC
+
+![[Screenshot 2025-08-28 at 5.48.49 PM.png]]![[Screenshot 2025-08-28 at 5.49.31 PM.png]]
+
+
+#### Draw Data Architecture
+Start by design the different layers (Draw.io)
+![[Screenshot 2025-08-28 at 6.17.54 PM.png]]
+
+
+#### Projects Initialization
+
+`Build Bronze Layer:`
+- Analyzing Source System
+- Coding Data Ingestion
+- Validating: Data Completeness & Schema Checks
+- Document: Draw Data Flow (draw.io)
+- Commit code in Git Repo
+
+`Build Silver Layer:`
+- Analysing: Explore & Understand Data
+- Document: Draw Data Integration (Draw.io)
+- Coding: Data Cleansing
+- Validating: Data Correctness Checks
+- Document: Extend Data Flow (Draw.io)
+- Commit Code in Git Repo
+
+`Build Gold Layer:`
+- Analysis: Explore Business Objects
+- Coding: Data Integration
+- Validating: Data Integration Checks
+- Document: Draw Data Model of Star Schema (Draw.io)
+- Document: Create Data Catalog
+- Document: Extend Data Flow (Draw.io)
+- Commit Code in Git Repo
+
+
+#### Define Naming Conventions
+set of rules or guidelines for naming anything in the project.
+- Database
+- Schema
+- Tables
+- Store Procedures
+
+**General Principles:**
+- Naming Conventions: Use snake_case, with lowercase letters and underscores _ to separate words
+- Language: Use english for all names
+- Avoid reserved Words: Do not use SQL reserved words as objects name
+
+Bronze & Silver Rules:
+- All names must start with the source system name, and table name must match their original names without renaming
+- `<sourcesystem>_<entity>`
+	- `<sourcesystem>`: Name of the source system (e.g, `crp`, `erp`)
+	- `<entity>`: exact table name for the source system
+	- Example: `crm_customer_info` -> Customer information from the CRM System
+
+Gold Rules:
+- All names must use meaningful, business-aligned names for tables, starting with the category prefix
+- `<category>_<entity>`
+	- `<category>`: Describes the role of the table, such as `dim`(dimension ) or `fact` (fact table)
+	- `<entity>`: Descriptive name of the table, aligned with the business domain (eg, `customers`,`products`,`sales` )
+	- Examples :
+		- `dim_customers` -> Dimension table for customer data.
+		- `fact_sales` -> Fact table containing sales transactions.
+
+Glossary of Category Patterns
+
+| Pattern | Meaning          | Example(s)                           |
+| ------- | ---------------- | ------------------------------------ |
+| `dim_`  | Dimension Table  | `dim_customer`,`dim_products`        |
+| `fact_` | Fact table       | `fact_sales`                         |
+| `agg_`  | Aggregated Table | `agg_customers`, `agg_sales_monthly` |
+
+### Create Database and Schema
+
+1.  Connect to Docker
+2. Once inside the master database
+```SQL
+CREATE DATABASE DataWarehouse;
+```
+3. \c Datawarehouse to connect to the database
+4. Create Schema (Folders ) to list of the schema `\dn`
+```SQL
+CREATE SCHEMA bronze;
+CREATE SCHEMA silver;
+CREATE SCHEMA gold;
+```
+
+
+Analyze the Bronze Layer
+- Analysis
+	- Interview source system experts
+  |
+  v
+- Coding:
+	- Data ingestion
+	|
+	v
+- Validating
+	- Data completeness & Schema checks
+	|
+	v
+- Docs & Version
+	- Data Documenting Versioning in GIT
+
+
+Question for the source Guy:
+Business Contacts & Ownership
+	- Who owns the data?
+	- What business process it supports
+	- System & Data documentation
+	- Data model & Data catalog
+
+Architecture & Technology
+- How is data stored?(SQL Server, Oracle, AWS, Azure...)
+- WHat are the integration capabilities? (API, KAFKA, File extract, DIRECT DB)
+
+Extract & Load
+- Incremental vs Full Loads?
+- Data Scope & Historical Needs
+- What is the expected size of the extracts?
+- Are there any data volume limitations?
+- How to avoid impacting the source system performance.
+- Authentication and authorization(Tokens, ssh key, VPN , ip whitelisting) ...
+
+
+#### Create DDL for TABLES
+```SQL
+DROP TABLE IF EXISTS bronze.crm_cust_info
+CREATE TABLE bronze.crm_cust_info (
+	cst_id INT,
+	cst_key VARCHAR(50),
+	cst_firstname VARCHAR(50),
+	cst_lastname VARCHAR(50),
+	cst_material_status VARCHAR(50),
+	cst_gndr VARCHAR(50),
+	cst_create_date DATE
+);
+
+CREATE TABLE bronze.crm_prd_info(
+	prd_id INT,
+	prd_key VARCHAR(50),
+	prd_nm VARCHAR(50),
+	prd_cost INT ,
+	prd_line VARCHAR(50),
+	prd_start_dt TIMESTAMP,
+	prd_end_dt TIMESTAMP
+);
+
+CREATE TABLE bronze.crm_sales_details(
+	sls_ord_num VARCHAR(50),
+	sls_prd_key VARCHAR(50),
+	sls_cust_id INT,
+	sls_order_dt INT,
+	sls_ship_dt INT,
+	sls_due_dt INT,
+	sls_sales INT,
+	sls_quantity INT,
+	sls_price INT
+);
+
+CREATE TABLE bronze.erp_loc_a101(
+	cid VARCHAR(50),
+	cntry VARCHAR(50)
+);
+
+
+CREATE TABLE bronze.erp_cust_az12(
+	cid VARCHAR(50),
+	bdate DATE,
+	gen VARCHAR(50)
+);
+
+CREATE TABLE bronze.erp_px_cat_g1v2 (
+	id VARCHAR(50),
+	cat VARCHAR(50),
+	subcat VARCHAR(50),
+	maintenance VARCHAR(50)
+);
+
+```
+
+
+### Bulk Insert
+Method of insert massive amount of data from `.txt` or `.csv` file directly into a database.
+
+First i accidentally name a column wrong to rename the column:
+```SQL
+ALTER TABLE bronze.crm_cust_info
+RENAME COLUMN wrong_column_name TO correct_column_name
+```
+
+BULK copy FROM `.csv` file INTO a docker database:
+Step1: Copy File locally to docker container
+1. Get Docker container ID
+```
+docker ps # to get docker container id
+```
+2.  Use `docker cp ` command to copy local files to the docker container
+```
+docker cp <filename> <containerID>: <target destination>
+
+docker cp /Users/robertodibari/Desktop/ImportantTutorial/Data_Engineer/SQL/Baara-sql-data-warehouse-project/datasets/source_crm/cust_info.csv   e47bb62473dc:/usr/share
+Successfully copied 857kB to e47bb62473dc:/usr/share
+```
+
+Step2: CREATE TABLE IF NOT DONE ALREADY
+Step 3: Import CSV into the table
+```psql
+\copy  bronze.crm_cust_info (cst_id, cst_key,cst_firstname,cst_lastname, cst_martial_status,cst_gndr, cst_create_date) FROM 'usr/share/cust_info.csv' DELIMITER ',' CSV HEADER;
+
+\copy <table_name> (column to imports, a,b,c,d,e,) FROM 'path to file'
+DELIMITER ',' CSV HEADER
+```
+
+Store the Truncate and Load inside of a procedure has to be done everyday to update and look for potential new informations
+
+```SQL
+CREATE OR REPLACE PROCEDURE public.truncate_and_load()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+	-- Step 1: Truncate the table to remove all existing data.
+	-- TRUNCATE is faster than DELETE and reclaims disk space immediately.
+	TRUNCATE TABLE bronze.crm_cust_info;
+	 -- Step 2: Load the data from the CSV file into the table.
+	 -- The list of columns () ensures data is loaded into the correct columns.
+	COPY bronze.crm_cust_info(cst_id, cst_key, cst_firstname, cst_lastname, cst_martial_status, cst_gndr, cst_create_date)
+	FROM '/usr/share/csv_import/cust_info.csv'
+	DELIMITER ','
+	-- The `HEADER` option indicates that the first row of the file is a header and should be skipped.
+	-- The `CSV` option specifies the file format.
+	CSV HEADER;
+
+	TRUNCATE TABLE bronze.crm_prd_info;
+
+	COPY bronze.crm_prd_info(prd_id, prd_key, prd_nm, prd_cost, prd_line, prd_start_dt, prd_end_dt)
+	FROM '/usr/share/csv_import/prd_info.csv'
+	DELIMITER ','
+	CSV HEADER;
+
+	TRUNCATE TABLE bronze.crm_sales_details;
+
+	COPY bronze.crm_sales_details(sls_ord_num ,sls_prd_key, sls_cust_id, sls_order_dt, sls_ship_dt, sls_due_dt, sls_sales, sls_quantity,sls_price)
+	FROM '/usr/share/csv_import/sales_details.csv'
+	DELIMITER ','
+	CSV HEADER;
+
+	TRUNCATE TABLE bronze.erp_loc_a101;
+
+	COPY bronze.erp_loc_a101(cid, cntry)
+	FROM '/usr/share/csv_import/LOC_A101.csv'
+	DELIMITER ','
+	CSV HEADER;
+
+	TRUNCATE TABLE bronze.erp_cust_az12;
+
+	COPY bronze.erp_cust_az12(cid, bdate,gen)
+	FROM '/usr/share/csv_import/CUST_AZ12.csv'
+	DELIMITER ','
+	CSV HEADER;
+
+    TRUNCATE TABLE bronze.erp_px_cat_g1v2;
+
+    COPY bronze.erp_px_cat_g1v2 (id, cat, subcat, maintenance)
+    FROM '/usr/share/csv_import/PX_CAT_G1V2.csv'
+    DELIMITER ','
+    CSV HEADER;
+
+END;
+$$;
+
+-- Call Store procudre
+CALL public.truncate_and_load();
+
+-- DROP Procedure
+DROP PROCEDURE public.load_px_cat_g1v2;
+```
+
+
+
+
+
+## Statistical Analysis:
+**Standard Deviation**
+**And Variance ![[Screenshot 2025-11-17 at 11.55.47 AM.png]]**

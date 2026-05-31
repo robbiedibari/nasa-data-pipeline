@@ -38,21 +38,6 @@ Base = declarative_base()
 # Session factory:
 SessionLocal = sessionmaker(bind=engine)
 
-
-class APOD(Base):
-    __tablename__ = "apod"
-
-    date = Column(Date, primary_key=True)
-    title = Column(String(255), nullable=False)
-    explanation = Column(Text)
-    url = Column(String(500))
-    media_type = Column(String(50))
-    hdurl = Column(String(500))
-
-    def __repr__(self):
-        return f"<APOD(date='{self.date},title='{self.title}')>"
-
-
 class AsteroidApproach(Base):
     __tablename__ = "asteroid_approaches"
 
