@@ -115,7 +115,7 @@ def parse_asteroid_data(data):
                     "relative_velocity_miles_per_hour": float(
                         approach["relative_velocity"]["miles_per_hour"]
                     ),
-                    # Distance:
+                    # Distance
                     "miss_distance_astronomical": float(
                         approach["miss_distance"]["astronomical"]
                     ),
@@ -255,12 +255,12 @@ def update_latest():
         print(f"Duplicates skipped: {skipped}")
         print(f"Total processed: {len(approaches)}")
     else:
-        print("❌ Failed to fetch latest data from NASA API")
+        print(" Failed to fetch latest data from NASA API")
 
 
 if __name__ == "__main__":
     current_date = datetime.now().strftime("%Y-%m-%d")
-    backfill_asteroids("2026-03-13", current_date)
+    backfill_asteroids("2026-06-04", current_date)
     if len(sys.argv) > 1 and sys.argv[1] == "update":
         # Manually update mode
         update_latest()
