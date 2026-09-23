@@ -24,7 +24,7 @@ This pipeline automatically fetches asteroid close approach data from NASA's Neo
 - **NASA NeoWs API**: Data source
 
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
