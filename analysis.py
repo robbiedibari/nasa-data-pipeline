@@ -19,12 +19,8 @@ DATABASE_URL = f"postgresql://{user}:{password}@{host}:{port}/{database}"
 
 query = """
 
-SELECT
-    MAX(close_approach_date) AS latest_approach_date,
-    MAX(ingested_at) AS latest_insert_time
-FROM asteroid_approaches;
-
-
+SELECT COUNT(*) AS total_records
+From asteroid_approaches
 """
 
 engine = create_engine(DATABASE_URL)

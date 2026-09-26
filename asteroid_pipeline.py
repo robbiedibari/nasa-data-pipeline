@@ -7,7 +7,7 @@ from pathlib import Path
 
 import psycopg2
 import requests
-from database import AsteroidApproach, SessionLocal, get_latest_approach_date
+from database import AsteroidApproach, SessionLocal, get_latest_approach_date,start_ingestion_run, complete_ingestion_run,fail_ingestion_run,
 from dotenv import load_dotenv
 from sqlalchemy.exc import IntegrityError
 
@@ -153,10 +153,21 @@ def load_asteroids_to_database(approach: list):
                 # Commit to database
                 session.commit()
                 loaded += 1
-            except IntegrityError:
+            except IntegrityError as e:
                 # Records already exists
                 session.rollback()
-                skipped += 1
+
+                if (
+                    getattr(e.orig, "pgcode", None) == "23505"
+                    and getattr(
+                        getattr(e.orig, "diag", None),
+                        "constraint_name",
+                        None,
+                    )=="idx_unique_approach"
+                  ):
+                      skipped += 1
+                else:
+                    raise
             except Exception as e:
                 print(f"  ✗ Error loading record: {e}")
                 session.rollback()
@@ -200,6 +211,7 @@ def backfill_asteroids(start_date_str: str, end_date_str, sleep_time=30):
         print(
             f"\n [Batch {batch_number}] {current_start.date()} to {current_end.date()} "
         )
+        run_id = start_ingestion_run(current_start.date(), current_end.date())
         data = retrieve_asteroids(
             current_start.strftime("%Y-%m-%d"), current_end.strftime("%Y-%m-%d")
         )

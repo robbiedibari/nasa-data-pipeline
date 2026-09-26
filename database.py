@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime,timezone
 
 from dotenv import load_dotenv
 from sqlalchemy import (
@@ -15,9 +15,10 @@ from sqlalchemy import (
     Text,
     create_engine,
     func,
+    CheckConstraint,
 )
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker,Mapped, mapped_column
 
 load_dotenv()
 
@@ -94,13 +95,98 @@ def get_latest_approach_date():
         return session.query(
             func.max(AsteroidApproach.close_approach_date)).scalar()
 
+# Table to monitor successfull and failed ingestion.
+class IngestionRun(Base):
+    __tablename__ = "ingestion_runs"
+    id = Column(Integer, primary_key = True, autoincrement = True)
+    requested_start_date = Column(Date, nullable=False)
+    requested_end_date = Column(Date,nullable=False)
+    started_at = Column(
+        DateTime(timezone=True),
+        nullable = False,
+        default = lambda:datetime.now(timezone.utc)
+    )
+    finished_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True
+    )
+    status: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default = "running"
+    )
+    records_processed = Column(
+        Integer,
+        nullable = False,
+        default = 0
+    )
+
+    error_message = Column(
+        Text,
+        nullable=True
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('running', 'succeeded', 'failed')",
+            name="ck_ingestion_runs_status"
+        ),
+        CheckConstraint(
+            "requested_end_date >= requested_start_date",
+            name="ck_ingestion_runs_date_range",
+        ),
+        CheckConstraint(
+            "records_processed >=0",
+            name="ck_ingestion_runs_record_count",
+        ),
+
+    )
+    # Receiving record of ranges pipeline completed.
+    def start_ingestion_run(start_date, end_date):
+        with SessionLocal() as session:
+            run = IngestionRun(
+                requested_start_date = start_date,
+                requested_end_date = end_date,
+            )
+            session.add(run)
+            session.commit()
+            session.refresh(run)
+
+            return run.id
+
+    def complete_ingestion_run(run_id, records_processed):
+        with SessionLocal() as session:
+            run = session.get(IngestionRun, run_id)
+
+            if run is None:
+                raise ValueError(f'Ingestion run {run_id} does not exists')
+
+            run.status = "succeeded"
+            run.finished_at = datetime.now(timezone.utc)
+            run.records_processed = records_processed
+
+            session.commit()
+
+    def fail_ingestion_run(run_id, error_message):
+        with SessionLocal() as session:
+            run = session.get(IngestionRun, run_id)
+
+            if run is None:
+                raise ValueError(f'Ingestion run {run_id} does not exists')
+
+            run.status = "failed"
+            run.finished_at = datetime.now(timezone.utc)
+            run.error_message = error_message
+
+            session.commit()
+
+
+
+
+
 # Function to initialize database
 def init_db():
     Base.metadata.create_all(engine)
-    print("Database tables created successfully!")
-    print("  - apod")
-    print("  - asteroid_approaches")
-
 
 if __name__ == "__main__":
     init_db()
