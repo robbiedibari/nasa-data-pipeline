@@ -19,17 +19,16 @@ DATABASE_URL = f"postgresql://{user}:{password}@{host}:{port}/{database}"
 
 query = """
 
-SELECT * FROM asteroid_approaches
+SELECT
+    MAX(close_approach_date) AS latest_approach_date,
+    MAX(ingested_at) AS latest_insert_time
+FROM asteroid_approaches;
 
-	
+
 """
 
 engine = create_engine(DATABASE_URL)
 
 df = pd.read_sql(query, engine)
 
-df.to_csv("Asteroid_approaches.csv")
-
-
-
-
+print(df)

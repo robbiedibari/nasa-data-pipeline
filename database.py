@@ -14,6 +14,7 @@ from sqlalchemy import (
     String,
     Text,
     create_engine,
+    func,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -87,6 +88,11 @@ class AsteroidApproach(Base):
             f"<AsteroidApproach(name='{self.name}', date='{self.close_approach_date}')>"
         )
 
+# Retrieving the latest asteroid approach date.
+def get_latest_approach_date():
+    with SessionLocal() as session:
+        return session.query(
+            func.max(AsteroidApproach.close_approach_date)).scalar()
 
 # Function to initialize database
 def init_db():

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import psycopg2
 import requests
-from database import AsteroidApproach, SessionLocal
+from database import AsteroidApproach, SessionLocal, get_latest_approach_date
 from dotenv import load_dotenv
 from sqlalchemy.exc import IntegrityError
 
@@ -260,7 +260,10 @@ def update_latest():
 
 if __name__ == "__main__":
     current_date = datetime.now().strftime("%Y-%m-%d")
-    backfill_asteroids("2026-06-04", current_date)
+    # isoformat to convert it to string.
+    latest_asteroid_date = get_latest_approach_date().isoformat()
+
+    backfill_asteroids(latest_asteroid_date, current_date)
     if len(sys.argv) > 1 and sys.argv[1] == "update":
         # Manually update mode
         update_latest()
